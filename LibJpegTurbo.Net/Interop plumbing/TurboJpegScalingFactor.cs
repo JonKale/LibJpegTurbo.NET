@@ -3,10 +3,14 @@
     #region
 
     using System;
+    using System.Diagnostics;
+    using System.Runtime.InteropServices;
 
     #endregion
 
     /// <summary>Fractional scaling factor</summary>
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [DebuggerDisplay("{DebugString}")]
     public struct TurboJpegScalingFactor
     {
         private readonly int num;
@@ -59,6 +63,14 @@
         public bool One
         {
             get { return (this.Numerator == 1 && this.Denominator == 1); }
+        }
+
+        /// <summary>
+        /// Gets the debugger display string.
+        /// </summary>
+        private string DebugString
+        {
+            get { return String.Format("{0}:{1}", this.num, this.denom); }
         }
 
         /// <summary>

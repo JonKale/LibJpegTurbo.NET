@@ -46,7 +46,7 @@ namespace LibJpegTurbo.Net
         /// </summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to 
         /// release only unmanaged resources.</param>
-        public void Dispose(bool disposing)
+        protected void Dispose(bool disposing)
         {
             if (this.turboJpegObject != null && !this.turboJpegObject.IsInvalid)
             {

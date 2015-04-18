@@ -33,7 +33,7 @@ namespace LibJpegTurbo.Net
         Crop = 4,
 
         /// <summary>
-        /// This option will discard the color data in the input image and produce a grayscale output image.
+        /// This option will discard the colour data in the input image and produce a grayscale output image.
         /// </summary>
         Gray = 8,
 

@@ -1,21 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LibJpegTurbo.Net
+﻿namespace LibJpegTurbo.Net
 {
+    #region
+
+    using System;
+    using System.Diagnostics;
+    using System.Drawing;
     using System.Runtime.InteropServices;
 
-    static class IntPtrUtilities
+    #endregion
+
+    /// <summary>
+    /// A bunch of utility functions for marshalling unmanaged blobs to managed arrays.
+    /// </summary>
+    internal static class IntPtrUtilities
     {
         /// <summary>
         /// Copies data from an unmanaged memory pointer to a managed 8-bit unsigned integer array.
         /// </summary>
         /// <param name="pointer">The memory pointer to copy from.</param>
         /// <param name="elements">The number of array elements to copy.</param>
-        /// <returns>An array of the specified size populated from <paramref name="pointer"/>.</returns>
+        /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static byte[] ToByteArray(this IntPtr pointer, int elements)
         {
             var array = new byte[elements];
@@ -28,7 +32,7 @@ namespace LibJpegTurbo.Net
         /// </summary>
         /// <param name="pointer">The memory pointer to copy from.</param>
         /// <param name="elements">The number of array elements to copy.</param>
-        /// <returns>An array of the specified size populated from <paramref name="pointer"/>.</returns>
+        /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static char[] ToCharArray(this IntPtr pointer, int elements)
         {
             var array = new char[elements];
@@ -41,7 +45,7 @@ namespace LibJpegTurbo.Net
         /// </summary>
         /// <param name="pointer">The memory pointer to copy from.</param>
         /// <param name="elements">The number of array elements to copy.</param>
-        /// <returns>An array of the specified size populated from <paramref name="pointer"/>.</returns>
+        /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static double[] ToDoubleArray(this IntPtr pointer, int elements)
         {
             var array = new double[elements];
@@ -54,7 +58,7 @@ namespace LibJpegTurbo.Net
         /// </summary>
         /// <param name="pointer">The memory pointer to copy from.</param>
         /// <param name="elements">The number of array elements to copy.</param>
-        /// <returns>An array of the specified size populated from <paramref name="pointer"/>.</returns>
+        /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static short[] ToShortArray(this IntPtr pointer, int elements)
         {
             var array = new short[elements];
@@ -67,7 +71,7 @@ namespace LibJpegTurbo.Net
         /// </summary>
         /// <param name="pointer">The memory pointer to copy from.</param>
         /// <param name="elements">The number of array elements to copy.</param>
-        /// <returns>An array of the specified size populated from <paramref name="pointer"/>.</returns>
+        /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static int[] ToIntArray(this IntPtr pointer, int elements)
         {
             var array = new int[elements];
@@ -80,7 +84,7 @@ namespace LibJpegTurbo.Net
         /// </summary>
         /// <param name="pointer">The memory pointer to copy from.</param>
         /// <param name="elements">The number of array elements to copy.</param>
-        /// <returns>An array of the specified size populated from <paramref name="pointer"/>.</returns>
+        /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static long[] ToLongArray(this IntPtr pointer, int elements)
         {
             var array = new long[elements];
@@ -93,7 +97,7 @@ namespace LibJpegTurbo.Net
         /// </summary>
         /// <param name="pointer">The memory pointer to copy from.</param>
         /// <param name="elements">The number of array elements to copy.</param>
-        /// <returns>An array of the specified size populated from <paramref name="pointer"/>.</returns>
+        /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static IntPtr[] ToIntPtrArray(this IntPtr pointer, int elements)
         {
             var array = new IntPtr[elements];
@@ -106,11 +110,31 @@ namespace LibJpegTurbo.Net
         /// </summary>
         /// <param name="pointer">The memory pointer to copy from.</param>
         /// <param name="elements">The number of array elements to copy.</param>
-        /// <returns>An array of the specified size populated from <paramref name="pointer"/>.</returns>
+        /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static float[] ToFloatArray(this IntPtr pointer, int elements)
         {
             var array = new float[elements];
             Marshal.Copy(pointer, array, 0, elements);
+            return array;
+        }
+
+        /// <summary>
+        /// Copies data from an unmanaged memory pointer to a managed <see cref="TurboJpegScalingFactor"/> array.
+        /// </summary>
+        /// <param name="pointer">The memory pointer to copy from.</param>
+        /// <param name="elements">The number of array elements to copy.</param>
+        /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
+        public static TurboJpegScalingFactor[] ToTurboJpegScalingFactorArray(this IntPtr pointer, int elements)
+        {
+            var array = new TurboJpegScalingFactor[elements];
+            var structSize = Marshal.SizeOf(typeof(TurboJpegScalingFactor));
+            var j = pointer;
+            for (var i = 0; i < elements; i += 1, j += structSize)
+            {
+                // str = (Point )Marshal.PtrToStructure(RectPtr, str.GetType());
+                array[i] = (TurboJpegScalingFactor) Marshal.PtrToStructure(j, typeof (TurboJpegScalingFactor));
+            }
+
             return array;
         }
 
@@ -121,7 +145,7 @@ namespace LibJpegTurbo.Net
         /// <param name="arrays">The number of arrays to copy.</param>
         /// <param name="elements">The number of elements to copy into each array.</param>
         /// <returns>An array of arrays of the specified size populated from <paramref name="pointer" />.</returns>
-        /// <remarks>This method does not support ragged arrays. Instead, use <see cref="ToByteArrays(IntPtr, int, int[])"/>.</remarks>
+        /// <remarks>This method does not support ragged arrays. Instead, use <see cref="ToByteArrays(IntPtr, int, int[])" />.</remarks>
         public static byte[][] ToByteArrays(this IntPtr pointer, int arrays, int elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
@@ -145,6 +169,7 @@ namespace LibJpegTurbo.Net
         public static byte[][] ToByteArrays(this IntPtr pointer, int arrays, int[] elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
             var output = new byte[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -161,7 +186,10 @@ namespace LibJpegTurbo.Net
         /// <param name="arrays">The number of arrays to copy.</param>
         /// <param name="elements">The number of elements to copy into each array.</param>
         /// <returns>An array of arrays of the specified size populated from <paramref name="pointer" />.</returns>
-        /// <remarks>This method does not support ragged arrays. Instead, use <see cref="ToCharArrays(System.IntPtr, System.Int32, System.Int32[])"/>.</remarks>
+        /// <remarks>
+        /// This method does not support ragged arrays. Instead, use
+        /// <see cref="ToCharArrays(System.IntPtr, System.Int32, System.Int32[])" />.
+        /// </remarks>
         public static char[][] ToCharArrays(this IntPtr pointer, int arrays, int elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
@@ -185,6 +213,7 @@ namespace LibJpegTurbo.Net
         public static char[][] ToCharArrays(this IntPtr pointer, int arrays, int[] elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
             var output = new char[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -201,7 +230,10 @@ namespace LibJpegTurbo.Net
         /// <param name="arrays">The number of arrays to copy.</param>
         /// <param name="elements">The number of elements to copy into each array.</param>
         /// <returns>An array of arrays of the specified size populated from <paramref name="pointer" />.</returns>
-        /// <remarks>This method does not support ragged arrays. Instead, use <see cref="ToDoubleArrays(System.IntPtr, System.Int32, System.Int32[])"/>.</remarks>
+        /// <remarks>
+        /// This method does not support ragged arrays. Instead, use
+        /// <see cref="ToDoubleArrays(System.IntPtr, System.Int32, System.Int32[])" />.
+        /// </remarks>
         public static double[][] ToDoubleArrays(this IntPtr pointer, int arrays, int elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
@@ -225,6 +257,7 @@ namespace LibJpegTurbo.Net
         public static double[][] ToDoubleArrays(this IntPtr pointer, int arrays, int[] elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
             var output = new double[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -241,7 +274,10 @@ namespace LibJpegTurbo.Net
         /// <param name="arrays">The number of arrays to copy.</param>
         /// <param name="elements">The number of elements to copy into each array.</param>
         /// <returns>An array of arrays of the specified size populated from <paramref name="pointer" />.</returns>
-        /// <remarks>This method does not support ragged arrays. Instead, use <see cref="ToShortArrays(System.IntPtr, System.Int32, System.Int32[])"/>.</remarks>
+        /// <remarks>
+        /// This method does not support ragged arrays. Instead, use
+        /// <see cref="ToShortArrays(System.IntPtr, System.Int32, System.Int32[])" />.
+        /// </remarks>
         public static short[][] ToShortArrays(this IntPtr pointer, int arrays, int elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
@@ -265,6 +301,7 @@ namespace LibJpegTurbo.Net
         public static short[][] ToShortArrays(this IntPtr pointer, int arrays, int[] elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
             var output = new short[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -281,7 +318,10 @@ namespace LibJpegTurbo.Net
         /// <param name="arrays">The number of arrays to copy.</param>
         /// <param name="elements">The number of elements to copy into each array.</param>
         /// <returns>An array of arrays of the specified size populated from <paramref name="pointer" />.</returns>
-        /// <remarks>This method does not support ragged arrays. Instead, use <see cref="ToIntArrays(System.IntPtr, System.Int32, System.Int32[])"/>.</remarks>
+        /// <remarks>
+        /// This method does not support ragged arrays. Instead, use
+        /// <see cref="ToIntArrays(System.IntPtr, System.Int32, System.Int32[])" />.
+        /// </remarks>
         public static int[][] ToIntArrays(this IntPtr pointer, int arrays, int elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
@@ -305,6 +345,7 @@ namespace LibJpegTurbo.Net
         public static int[][] ToIntArrays(this IntPtr pointer, int arrays, int[] elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
             var output = new int[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -321,7 +362,10 @@ namespace LibJpegTurbo.Net
         /// <param name="arrays">The number of arrays to copy.</param>
         /// <param name="elements">The number of elements to copy into each array.</param>
         /// <returns>An array of arrays of the specified size populated from <paramref name="pointer" />.</returns>
-        /// <remarks>This method does not support ragged arrays. Instead, use <see cref="ToLongArrays(System.IntPtr, System.Int32, System.Int32[])"/>.</remarks>
+        /// <remarks>
+        /// This method does not support ragged arrays. Instead, use
+        /// <see cref="ToLongArrays(System.IntPtr, System.Int32, System.Int32[])" />.
+        /// </remarks>
         public static long[][] ToLongArrays(this IntPtr pointer, int arrays, int elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
@@ -345,6 +389,7 @@ namespace LibJpegTurbo.Net
         public static long[][] ToLongArrays(this IntPtr pointer, int arrays, int[] elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
             var output = new long[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -361,7 +406,10 @@ namespace LibJpegTurbo.Net
         /// <param name="arrays">The number of arrays to copy.</param>
         /// <param name="elements">The number of elements to copy into each array.</param>
         /// <returns>An array of arrays of the specified size populated from <paramref name="pointer" />.</returns>
-        /// <remarks>This method does not support ragged arrays. Instead, use <see cref="ToIntPtrArrays(System.IntPtr, System.Int32, System.Int32[])"/>.</remarks>
+        /// <remarks>
+        /// This method does not support ragged arrays. Instead, use
+        /// <see cref="ToIntPtrArrays(System.IntPtr, System.Int32, System.Int32[])" />.
+        /// </remarks>
         public static IntPtr[][] ToIntPtrArrays(this IntPtr pointer, int arrays, int elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
@@ -385,6 +433,7 @@ namespace LibJpegTurbo.Net
         public static IntPtr[][] ToIntPtrArrays(this IntPtr pointer, int arrays, int[] elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
             var output = new IntPtr[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -401,7 +450,10 @@ namespace LibJpegTurbo.Net
         /// <param name="arrays">The number of arrays to copy.</param>
         /// <param name="elements">The number of elements to copy into each array.</param>
         /// <returns>An array of arrays of the specified size populated from <paramref name="pointer" />.</returns>
-        /// <remarks>This method does not support ragged arrays. Instead, use <see cref="ToFloatArrays(System.IntPtr, System.Int32, System.Int32[])"/>.</remarks>
+        /// <remarks>
+        /// This method does not support ragged arrays. Instead, use
+        /// <see cref="ToFloatArrays(System.IntPtr, System.Int32, System.Int32[])" />.
+        /// </remarks>
         public static float[][] ToFloatArrays(this IntPtr pointer, int arrays, int elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
@@ -425,6 +477,7 @@ namespace LibJpegTurbo.Net
         public static float[][] ToFloatArrays(this IntPtr pointer, int arrays, int[] elements)
         {
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
             var output = new float[arrays][];
             for (var i = 0; i < arrays; ++i)
             {

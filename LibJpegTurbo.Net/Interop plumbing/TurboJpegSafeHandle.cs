@@ -1,7 +1,11 @@
 namespace LibJpegTurbo.Net
 {
+    #region
+
     using System;
     using System.Runtime.InteropServices;
+
+    #endregion
 
     /// <summary>
     /// A wrapper for a handle to a TurboJPEG compressor, decompressor or transformer instance.
@@ -9,7 +13,7 @@ namespace LibJpegTurbo.Net
     internal class TurboJpegSafeHandle : SafeHandle
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:System.Runtime.InteropServices.SafeHandle" /> class with the specified invalid handle value.
+        /// Initializes a new instance of the <see cref="TurboJpegSafeHandle" /> class with the specified handle value.
         /// </summary>
         /// <param name="handle">The handle.</param>
         public TurboJpegSafeHandle(IntPtr handle)
@@ -26,19 +30,6 @@ namespace LibJpegTurbo.Net
         #region Overrides of SafeHandle
 
         /// <summary>
-        /// When overridden in a derived class, executes the code required to free the handle.
-        /// </summary>
-        /// <returns>
-        /// true if the handle is released successfully; otherwise, in the event of a catastrophic failure, false. 
-        /// In this case, it generates a releaseHandleFailed MDA Managed Debugging Assistant.
-        /// </returns>
-        protected override bool ReleaseHandle()
-        {
-            TurboJpegInterop.destroy(this.handle);
-            return true;
-        }
-
-        /// <summary>
         /// When overridden in a derived class, gets a value indicating whether the handle value is invalid.
         /// </summary>
         /// <returns>
@@ -47,6 +38,17 @@ namespace LibJpegTurbo.Net
         public override bool IsInvalid
         {
             get { return this.handle == IntPtr.Zero; }
+        }
+
+        /// <summary>
+        /// When overridden in a derived class, executes the code required to free the handle.
+        /// </summary>
+        /// <returns>
+        /// <c>true</c> if the handle is released successfully; otherwise, in the event of a catastrophic failure, <c>false.</c>
+        /// </returns>
+        protected override bool ReleaseHandle()
+        {
+            return TurboJpegInterop.destroy(this.handle) ==  0;
         }
 
         #endregion
