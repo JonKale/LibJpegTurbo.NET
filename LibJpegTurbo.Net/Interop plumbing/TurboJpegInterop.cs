@@ -24,13 +24,7 @@
         {
             int count;
             var buffer = getScalingFactors(out count);
-            scalingFactors = new TurboJpegScalingFactor[count];
-            for (var i = 0; i < count; ++i)
-            {
-                var tjsfType = typeof (TurboJpegScalingFactor);
-                scalingFactors[i] =
-                    (TurboJpegScalingFactor) Marshal.PtrToStructure(buffer + i * Marshal.SizeOf(tjsfType), tjsfType);
-            }
+            scalingFactors = buffer.ToTurboJpegScalingFactorArray(count);
         }
 
 
@@ -40,6 +34,16 @@
         public static TurboJpegScalingFactor[] ScalingFactors
         {
             get { return (TurboJpegScalingFactor[]) scalingFactors.Clone(); }
+        }
+
+        /// <summary>
+        /// Gets the last error message.
+        /// </summary>
+        /// <returns>A descriptive error message explaining why the last command failed.</returns>
+        public static string GetLastError()
+        {
+            var messageBuffer = getErrorMessage();
+            return Marshal.PtrToStringAnsi(messageBuffer);
         }
 
         #region Methods
@@ -58,7 +62,7 @@
         /// <summary>
         /// Returns the maximum size of the buffer (in bytes) required to hold a JPEG image with the specified width,
         /// height and chroma subsampling.
-        /// <para>The number of bytes returned by this function is larger than the size of the uncompressed source 
+        /// <para>The number of bytes returned by this function is larger than the size of the uncompressed source
         /// image. The reason for this is that the JPEG format uses 16-bit coefficients, and it is thus possible for a very
         /// high-quality JPEG image with very high-frequency content to expand rather than compress when converted to
         /// the JPEG format. Such images represent a very rare corner case, but since there is no way to predict the
@@ -68,8 +72,8 @@
         /// <param name="height">The height (in pixels) of the JPEG image.</param>
         /// <param name="jpegSubsamp">The chroma subsampling to be used when generating the JPEG image.</param>
         /// <returns>
-        /// The maximum size of the buffer (in bytes) required to hold a JPEG image with the given width,
-        /// height, and chroma subsampling.
+        /// The maximum size of the buffer (in bytes) required to hold a JPEG image with the given width, height, and
+        /// chroma subsampling.
         /// </returns>
         [DllImport("turbojpeg.dll", EntryPoint = "tjBufSize", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int bufSize(int width, int height, int jpegSubsamp);
@@ -84,11 +88,11 @@
         /// <param name="height">The height of the YUV image in pixels.</param>
         /// <param name="subsamp">The chroma subsampling used in the YUV image.</param>
         /// <returns>
-        /// The size of the buffer (in bytes) required to hold a YUV planar image with the given width, height and 
+        /// The size of the buffer (in bytes) required to hold a YUV planar image with the given width, height and
         /// chroma subsampling.
         /// </returns>
         [DllImport("turbojpeg.dll", EntryPoint = "tjBufSizeYUV", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int bufSizeYUV(int width, int height, int subsamp);
+        internal static extern int bufSizeYUV(int width, int pad, int height, Subsampling subsamp);
 
         /// <summary>
         /// Compresses an RGB or grayscale image into a JPEG image.
@@ -97,7 +101,7 @@
         /// <param name="sourceBuffer">An image buffer containing RGB or grayscale pixels to be compressed.</param>
         /// <param name="width">The width (in pixels) of the source image.</param>
         /// <param name="pitch">The bytes per line of the source image. Normally, this should be
-        ///  <paramref name="width" /> * <see cref="TurboJpegUtilities.GetPixelSize" />(<paramref name="pixelFormat" />) 
+        /// <paramref name="width" /> * <see cref="TurboJpegUtilities.GetPixelSize" />(<paramref name="pixelFormat" />)
         /// if the image is unpadded, or <see cref="TurboJpegUtilities.Pad" />(<paramref name="width" /> *
         /// <see cref="TurboJpegUtilities.GetPixelSize" />(<paramref name="pixelFormat" />)) if each line of the image is
         /// padded to the nearest 32-bit boundary, as is the case for Windows bitmaps. You can also be clever and use
@@ -106,17 +110,17 @@
         /// </param>
         /// <param name="height">The height (in pixels) of the source image.</param>
         /// <param name="pixelFormat">The pixel format of the source image.</param>
-        /// <param name="destinationBuffer">A pointer to an image buffer that will receive the JPEG image. TurboJPEG 
-        /// has the ability to reallocate the JPEG buffer to accommodate the size of the JPEG image. Thus, you can 
+        /// <param name="destinationBuffer">A pointer to an image buffer that will receive the JPEG image. TurboJPEG
+        /// has the ability to reallocate the JPEG buffer to accommodate the size of the JPEG image. Thus, you can
         /// choose to:
         /// <list type="number">
-        /// <item>pre-allocate the JPEG buffer with an arbitrary size using <see cref="alloc" /> and let TurboJPEG 
-        /// grow the buffer as needed, or</item>
-        /// <item>set <paramref name="destinationBuffer" /> to NULL to tell TurboJPEG to allocate the buffer for you, 
-        /// or</item>
-        /// <item>pre-allocate the buffer to a "worst case" size determined by calling <see cref="bufSize" />. The 
-        /// buffer should never be re-allocated; to ensure that it is not use <see cref="TurboJpegFlags.NoReallocation" />
-        /// and if the buffer is invalid or too small an error will be generated.</item>
+        ///     <item>pre-allocate the JPEG buffer with an arbitrary size using <see cref="alloc" /> and let TurboJPEG
+        ///     grow the buffer as needed, or</item>
+        ///     <item>set <paramref name="destinationBuffer" /> to NULL to tell TurboJPEG to allocate the buffer for you,
+        ///     or</item>
+        ///     <item>pre-allocate the buffer to a "worst case" size determined by calling <see cref="bufSize" />. The
+        ///     buffer should never be re-allocated; to ensure that it is not use <see cref="TurboJpegFlags.NoReallocation" />
+        ///     and if the buffer is invalid or too small an error will be generated.</item>
         /// </list>
         /// If you choose option 1, <paramref name="bufferSize" /> should be set to the size of your pre-allocated
         /// buffer. Unless you have set <see cref="TurboJpegFlags.NoReallocation" />, you should always check
@@ -196,18 +200,46 @@
         /// <param name="width">On return, contains the width of the image.</param>
         /// <param name="height">On return, contains the height of the image.</param>
         /// <param name="chroma">On return, contains the chroma subsampling format used when compressing the image.</param>
-        /// <returns>0 on success, or -1 if an error occurred.</returns>
-        [DllImport("turbojpeg.dll", EntryPoint = "tjDecompressHeader2", CallingConvention = CallingConvention.Cdecl)]
+        /// <param name="colourspace">On return, contains the colourspace of the JPEG image.</param>
+        /// <returns>
+        /// 0 on success, or -1 if an error occurred.
+        /// </returns>
+        [DllImport("turbojpeg.dll", EntryPoint = "tjDecompressHeader3", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int decompressHeader(IntPtr handle,
                                                     byte[] sourceBuffer,
                                                     int size,
                                                     out int width,
                                                     out int height,
-                                                    out int chroma);
+                                                    out Subsampling chroma,
+                                                    out Colourspace colourspace);
 
         /// <summary>
         /// Decompresses a JPEG image to a YUV planar image.
         /// </summary>
+        /// <param name="handle">A handle to a TurboJPEG decompressor or transformer instance.</param>
+        /// <param name="sourceBuffer">The source buffer containing the JPEG image to decompress.</param>
+        /// <param name="size">The size of the JPEG image (in bytes).</param>
+        /// <param name="destinationBuffer">The destination buffer that will receive the YUV image. Use
+        /// <see cref="bufSizeYUV" /> to determine the appropriate size for this buffer based on the image width,
+        /// height and chroma subsampling.</param>
+        /// <param name="width">The desired width (in pixels) of the YUV image. If this is different than the width of 
+        /// the JPEG image being decompressed, then TurboJPEG will use scaling in the JPEG decompressor to generate the 
+        /// largest possible image that will fit within the desired width. If width is set to 0, then only the height 
+        /// will be considered when determining the scaled image size. If the scaled width is not an even multiple of 
+        /// the MCU block width (see tjMCUWidth), then an intermediate buffer copy will be performed within TurboJPEG.</param>
+        /// <param name="pad">The width of each line in each plane of the YUV image will be padded to the nearest 
+        /// multiple of this number of bytes (must be a power of 2.) To generate images suitable for X Video, <param name="pad" /> 
+        /// should be set to 4.</param>
+        /// <param name="height">The desired height (in pixels) of the YUV image. If this is different than the height 
+        /// of the JPEG image being decompressed, then TurboJPEG will use scaling in the JPEG decompressor to generate 
+        /// the largest possible image that will fit within the desired height. If height is set to 0, then only the 
+        /// width will be considered when determining the scaled image size. If the scaled height is not an even 
+        /// multiple of the MCU block height (see tjMCUHeight), then an intermediate buffer copy will be performed 
+        /// within TurboJPEG.</param>
+        /// <param name="flags">The flags.</param>
+        /// <returns>
+        /// 0 on success, or -1 if an error occurred.
+        /// </returns>
         /// <remarks>
         /// This function performs JPEG decompression but leaves out the colour conversion step, so a planar YUV image
         /// is generated instead of an RGB image. The padding of the planes in this image is the same as in the images
@@ -215,24 +247,19 @@
         /// of the MCU block size (see <see cref="TurboJpegUtilities.GetMcuWidth" /> and
         /// <see cref="TurboJpegUtilities.GetMcuHeight" />), then an intermediate buffer copy will be performed within
         /// TurboJPEG.
-        /// <para>NOTE: Technically, the JPEG format uses the YCbCr colourspace, but per the convention of the digital 
+        /// <para>NOTE: Technically, the JPEG format uses the YCbCr colourspace, but per the convention of the digital
         /// video community, the TurboJPEG API uses "YUV" to refer to an image format consisting of Y, Cb, and Cr image
         /// planes.</para>
         /// </remarks>
-        /// <param name="handle">A handle to a TurboJPEG decompressor or transformer instance.</param>
-        /// <param name="sourceBuffer">The source buffer containing the JPEG image to decompress.</param>
-        /// <param name="size">The size of the JPEG image (in bytes).</param>
-        /// <param name="destinationBuffer"> The destination buffer that will receive the YUV image. Use
-        /// <see cref="bufSizeYUV" /> to determine the appropriate size for this buffer based on the image width, 
-        /// height and chroma subsampling.</param>
-        /// <param name="flags">The flags.</param>
-        /// <returns>0 on success, or -1 if an error occurred.</returns>
-        [DllImport("turbojpeg.dll", EntryPoint = "tjDecompressToYUV", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("turbojpeg.dll", EntryPoint = "tjDecompressToYUV2", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int decompressToYUV(IntPtr handle,
                                                    byte[] sourceBuffer,
                                                    int size,
                                                    ref IntPtr destinationBuffer,
-                                                   int flags);
+                                                   int width,
+                                                   int pad,
+                                                   int height,
+                                                   TurboJpegFlags flags);
 
         /// <summary>
         /// Destroys a TurboJPEG compressor, decompressor, or transformer instance.
@@ -252,10 +279,10 @@
         /// 2 in the output image (same goes for the height of the luminance plane, if the chrominance components are
         /// subsampled along the vertical dimension.) Also, each line of each plane in the output image is padded to 4
         /// bytes. Although this will work with any subsampling option, it is really only useful in combination with
-        /// <see cref="Subsampling.Chroma420" />, which produces an image compatible with the I420 (AKA "YUV420P") 
+        /// <see cref="Subsampling.Chroma420" />, which produces an image compatible with the I420 (AKA "YUV420P")
         /// format.
-        /// <para>NOTE: Technically, the JPEG format uses the YCbCr colourspace, but per the convention of the digital 
-        /// video community, the TurboJPEG API uses "YUV" to refer to an image format consisting of Y, Cb, and Cr image 
+        /// <para>NOTE: Technically, the JPEG format uses the YCbCr colourspace, but per the convention of the digital
+        /// video community, the TurboJPEG API uses "YUV" to refer to an image format consisting of Y, Cb, and Cr image
         /// planes.</para>
         /// </remarks>
         /// <param name="handle">A handle to a TurboJPEG compressor or transformer instance.</param>
@@ -302,9 +329,10 @@
         /// Gets a descriptive error message explaining why the last command failed.
         /// </summary>
         /// <returns>A descriptive error message explaining why the last command failed.</returns>
+        /// <remarks>The buffer is owned by TurboJpegLib and should not be released, freed or otherwise tampered with.</remarks>
         [DllImport("turbojpeg.dll", EntryPoint = "tjGetErrorStr", CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr getErrorMessage();
- 
+
         /// <summary>
         /// Returns a list of fractional scaling factors that the JPEG decompressor in this implementation of TurboJPEG
         /// supports.
@@ -345,18 +373,18 @@
         /// <param name="sourceBuffer">The source buffer containing the JPEG image to transform.</param>
         /// <param name="sourceSize">Size of the JPEG image (in bytes).</param>
         /// <param name="count">The number of transformed JPEG images to generate.</param>
-        /// <param name="destinationBuffers">An array of <paramref name="count" /> image buffers. 
+        /// <param name="destinationBuffers">An array of <paramref name="count" /> image buffers.
         /// <paramref name="destinationBuffers" />[i] will receive a JPEG image that has been transformed using the
         /// parameters in <paramref name="transforms" />[i]. TurboJPEG has the ability to reallocate the JPEG buffer to
         /// accommodate the size of the JPEG image. Thus, you can choose to:
         /// <list type="number">
-        /// <item>pre-allocate the JPEG buffer with an arbitrary size using tjAlloc() and let TurboJPEG grow the buffer 
-        /// as needed, or</item>
-        /// <item>set <paramref name="destinationBuffers" />[i] to <see cref="IntPtr.Zero" /> to tell TurboJPEG to 
-        /// allocate the buffer for you, or</item>
-        /// <item>pre-allocate the buffers to a "worst case" size determined by calling <see cref="bufSize" />. The 
-        /// buffers should never be re-allocated; to ensure that they are not use <see cref="TurboJpegFlags.NoReallocation" />
-        /// and if a buffer is invalid or too small an error will be generated.</item>
+        ///     <item>pre-allocate the JPEG buffer with an arbitrary size using tjAlloc() and let TurboJPEG grow the buffer
+        ///     as needed, or</item>
+        ///     <item>set <paramref name="destinationBuffers" />[i] to <see cref="IntPtr.Zero" /> to tell TurboJPEG to
+        ///     allocate the buffer for you, or</item>
+        ///     <item>pre-allocate the buffers to a "worst case" size determined by calling <see cref="bufSize" />. The
+        ///     buffers should never be re-allocated; to ensure that they are not use <see cref="TurboJpegFlags.NoReallocation" />
+        ///     and if a buffer is invalid or too small an error will be generated.</item>
         /// </list>
         /// If you choose option 1, <paramref name="sizes" />[i] should be set to the size of your pre-allocated buffer.
         /// You should always check <paramref name="destinationBuffers" />[i] upon return from this function, as it may

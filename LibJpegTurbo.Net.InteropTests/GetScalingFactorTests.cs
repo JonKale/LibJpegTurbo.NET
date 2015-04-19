@@ -1,6 +1,5 @@
 ﻿namespace LibJpegTurbo.Net.InteropTests
 {
-    using System;
     using System.Linq;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -10,10 +9,7 @@
         [TestMethod]
         public void GetScalingFactors()
         {
-            int count;
-            var scalingFactorsPointer = TurboJpegInterop.getScalingFactors(out count);
-            var scalingFactors = scalingFactorsPointer.ToTurboJpegScalingFactorArray(count);
-
+            var scalingFactors = TurboJpegInterop.ScalingFactors;
             Assert.IsTrue(scalingFactors.Length == 16);
             Assert.IsTrue(scalingFactors.Contains(new TurboJpegScalingFactor(2, 1)));
             Assert.IsTrue(scalingFactors.Contains(new TurboJpegScalingFactor(15, 8)));

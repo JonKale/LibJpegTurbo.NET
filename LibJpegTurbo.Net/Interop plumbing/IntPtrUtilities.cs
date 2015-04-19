@@ -131,8 +131,7 @@
             var j = pointer;
             for (var i = 0; i < elements; i += 1, j += structSize)
             {
-                // str = (Point )Marshal.PtrToStructure(RectPtr, str.GetType());
-                array[i] = (TurboJpegScalingFactor) Marshal.PtrToStructure(j, typeof (TurboJpegScalingFactor));
+                array[i] = (TurboJpegScalingFactor) Marshal.PtrToStructure(j, typeof(TurboJpegScalingFactor));
             }
 
             return array;

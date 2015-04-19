@@ -124,22 +124,30 @@
             this.jpegBuffer = jpegImage;
             int width;
             int height;
-            int chroma;
+            Subsampling chroma;
+            Colourspace colourspace;
 
             if (TurboJpegInterop.decompressHeader(this.Handle,
                                                   this.jpegBuffer,
                                                   this.jpegBuffer.Length,
                                                   out width,
                                                   out height,
-                                                  out chroma) != 0)
+                                                  out chroma, 
+                                                  out colourspace) != 0)
             {
                 throw new Exception(Marshal.PtrToStringAnsi(TurboJpegInterop.getErrorMessage()));
             }
 
             this.JpegWidth = width;
             this.JpegHeight = height;
-            this.JpegSubsampling = (Subsampling) chroma;
+            this.JpegSubsampling = chroma;
+            this.JpegColourspace = colourspace;
         }
+
+        /// <summary>
+        /// Gets the JPEG colourspace.
+        /// </summary>
+        public Colourspace JpegColourspace { get; private set; }
 
         /// <summary>
         /// Returns the width of the largest scaled-down image that the TurboJPEG decompressor can generate without
@@ -320,29 +328,24 @@
             // matching deallocator lest Bad Things happen. Unlike compress, where the initial buffer size is a best 
             // guess, we know the dimensions of the uncompressed image and the number of bits per pixel and so sizing 
             // it appropriately is trivial and the buffer will never be reallocated
-            var buffer = TurboJpegInterop.alloc((int) bufferSize);
-            try
+            using (var buffer = new TurboJpegSafeHandle(TurboJpegInterop.alloc(bufferSize)))
             {
+                var ptr = buffer.DangerousGetHandle();
                 if (TurboJpegInterop.decompress(this.Handle,
                                                 this.jpegBuffer,
                                                 this.jpegBuffer.Length,
-                                                ref buffer,
+                                                ref ptr,
                                                 desiredWidth,
                                                 pitch,
                                                 desiredHeight,
                                                 (int) pixelFormat,
                                                 (int) flags) != 0)
                 {
-                    throw new Exception(Marshal.PtrToStringAnsi(TurboJpegInterop.getErrorMessage()));
+                    throw new Exception(TurboJpegInterop.GetLastError());
                 }
 
                 // we now have the result in a buffer on the unmanaged heap. 
-                return new TurboJpegBuffer(buffer, (int) bufferSize);
-            }
-            catch
-            {
-                TurboJpegInterop.free(buffer);
-                throw;
+                return new TurboJpegBuffer(ptr, bufferSize);
             }
         }
 
@@ -369,27 +372,25 @@
                 throw new Exception("Invalid argument in DecompressToYuv()");
             }
 
-            var bufferSize = TurboJpegInterop.bufSizeYUV(this.JpegWidth, this.JpegHeight, (int) this.JpegSubsampling);
-            var buffer = TurboJpegInterop.alloc(bufferSize);
-            try
+            var bufferSize = TurboJpegInterop.bufSizeYUV(this.JpegWidth, 4, this.JpegHeight, this.JpegSubsampling);
+            using (var buffer = new TurboJpegSafeHandle(TurboJpegInterop.alloc(bufferSize)))
             {
-                if (
-                    TurboJpegInterop.decompressToYUV(this.Handle,
+                var ptr = buffer.DangerousGetHandle();
+                if (TurboJpegInterop.decompressToYUV(this.Handle,
                                                      this.jpegBuffer,
                                                      this.jpegBuffer.Length,
-                                                     ref buffer,
-                                                     (int) flags) != 0)
+                                                     ref ptr,
+                                                     this.JpegWidth,
+                                                     4,
+                                                     this.JpegHeight,
+                                                     flags) != 0)
                 {
-                    throw new Exception(Marshal.PtrToStringAnsi(TurboJpegInterop.getErrorMessage()));
+                    throw new Exception(TurboJpegInterop.GetLastError());
                 }
 
                 // we now have the result in a buffer on the unmanaged heap. 
-                return new TurboJpegBuffer(buffer, bufferSize);
-            }
-            catch
-            {
-                TurboJpegInterop.free(buffer);
-                throw;
+                
+                return new TurboJpegBuffer(ptr, bufferSize);
             }
         }
 

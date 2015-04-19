@@ -228,7 +228,10 @@
                                        destinationBuffer,
                                        (int) this.Subsampling,
                                        (int) compressionOptions);
-            this.CompressedSize = TurboJpegInterop.bufSizeYUV(this.sourceWidth, this.sourceHeight, (int)this.Subsampling);
+            this.CompressedSize = TurboJpegInterop.bufSizeYUV(this.sourceWidth,
+                                                              this.sourcePitch,
+                                                              this.sourceHeight,
+                                                              this.Subsampling);
         }
 
         /// <summary>
@@ -244,7 +247,12 @@
                 throw new InvalidOperationException(NoAssocError);
             }
 
-            var buf = new byte[TurboJpegInterop.bufSizeYUV(this.sourceWidth, this.sourceHeight, (int)this.Subsampling)];
+            var buf =
+                new byte[
+                    TurboJpegInterop.bufSizeYUV(this.sourceWidth,
+                                                this.sourcePitch,
+                                                this.sourceHeight,
+                                                this.Subsampling)];
             this.EncodeYuv(buf, compressionOptions);
             return buf;
         }
