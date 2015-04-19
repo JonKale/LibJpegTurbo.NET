@@ -48,8 +48,47 @@ namespace LibJpegTurbo.Net
         /// </returns>
         protected override bool ReleaseHandle()
         {
-            return TurboJpegInterop.destroy(this.handle) ==  0;
+            if (this.IsInvalid)
+            {
+                return true;
+            }
+            
+            var success = TurboJpegInterop.destroy(this.handle);
+            this.handle = IntPtr.Zero;
+            return success == 0;
         }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="TurboJpegSafeHandle"/> to <see cref="IntPtr"/>.
+        /// </summary>
+        /// <param name="handle">The handle.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        /// <exception cref="System.InvalidOperationException">handle is invalid</exception>
+        public static explicit operator IntPtr(TurboJpegSafeHandle handle)
+        {
+            if (handle.IsInvalid)
+            {
+                throw new InvalidOperationException("handle is invalid");
+            }
+
+            return handle.DangerousGetHandle();
+        }
+
+        #region Overrides of SafeHandle
+
+        /// <summary>
+        /// Releases the unmanaged resources used by the <see cref="T:System.Runtime.InteropServices.SafeHandle"/> class specifying whether to perform a normal dispose operation.
+        /// </summary>
+        /// <param name="disposing">true for a normal dispose operation; false to finalize the handle.</param>
+        protected override void Dispose(bool disposing)
+        {
+            this.ReleaseHandle();
+            base.Dispose(disposing);
+        }
+
+        #endregion
 
         #endregion
     }

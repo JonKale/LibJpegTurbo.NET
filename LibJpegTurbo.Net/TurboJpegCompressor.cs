@@ -160,19 +160,21 @@
             try
             {
                 if (this.sourceX >= 0 || this.sourceY >= 0)
-                if (TurboJpegInterop.compress(this.Handle,
-                                              this.sourceBuffer,
-                                              this.sourceWidth,
-                                              this.sourcePitch,
-                                              this.sourceHeight,
-                                              this.sourcePixelFormat,
-                                              ref buffer,
-                                              ref bufferSize,
-                                              this.Subsampling,
-                                              this.jpegQuality,
-                                              compressionOptions) != 0)
                 {
-                    throw new Exception(Marshal.PtrToStringAnsi(TurboJpegInterop.getErrorMessage()));
+                    if (TurboJpegInterop.compress(this.Handle,
+                                                  this.sourceBuffer,
+                                                  this.sourceWidth,
+                                                  this.sourcePitch,
+                                                  this.sourceHeight,
+                                                  this.sourcePixelFormat,
+                                                  ref buffer,
+                                                  ref bufferSize,
+                                                  this.Subsampling,
+                                                  this.jpegQuality,
+                                                  compressionOptions) != 0)
+                    {
+                        throw new Exception(Marshal.PtrToStringAnsi(TurboJpegInterop.getErrorMessage()));
+                    }
                 }
 
                 // we now have the result in a buffer on the unmanaged heap. It may have moved from the original, 

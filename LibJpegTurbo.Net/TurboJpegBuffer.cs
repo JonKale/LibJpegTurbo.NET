@@ -1,12 +1,43 @@
 namespace LibJpegTurbo.Net
 {
+    #region
+
     using System;
+
+    #endregion
 
     /// <summary>
     /// Represents a buffer allocated by libjpeg-turbo on its heap.
     /// </summary>
     public class TurboJpegBuffer : IDisposable
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TurboJpegBuffer" /> class.
+        /// </summary>
+        /// <param name="buffer">The start of the buffer.</param>
+        /// <param name="bufferSize">Size of the buffer.</param>
+        public TurboJpegBuffer(IntPtr buffer, int bufferSize)
+        {
+            if (buffer == IntPtr.Zero)
+            {
+                throw new ArgumentOutOfRangeException("buffer", "buffer must not be the NUL pointer");
+            }
+
+            this.Buffer = buffer;
+            this.BufferSize = bufferSize;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TurboJpegBuffer" /> class and allocates a buffer of the
+        /// specified size.
+        /// </summary>
+        /// <param name="bufferSize">Size of the buffer.</param>
+        public TurboJpegBuffer(int bufferSize)
+        {
+            this.Buffer = TurboJpegInterop.alloc(bufferSize);
+            this.BufferSize = bufferSize;
+        }
+
         /// <summary>
         /// Gets the buffer.
         /// </summary>
@@ -18,23 +49,38 @@ namespace LibJpegTurbo.Net
         public int BufferSize { get; private set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TurboJpegBuffer"/> class.
+        /// Gets a value indicating whether this instance is invalid.
         /// </summary>
-        /// <param name="buffer">The start of the buffer.</param>
-        /// <param name="bufferSize">Size of the buffer.</param>
-        public TurboJpegBuffer(IntPtr buffer, int bufferSize)
+        public bool IsInvalid
         {
-            this.Buffer = buffer;
-            this.BufferSize = bufferSize;
+            get { return this.Buffer == IntPtr.Zero; }
         }
 
         /// <summary>
-        /// Gets the buffer as an array of bte on the managed heap.
+        /// Gets the buffer as an array of byte on the managed heap.
         /// </summary>
         /// <returns></returns>
         public byte[] ToArray()
         {
             return this.Buffer.ToByteArray(this.BufferSize);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="TurboJpegBuffer" /> to <see cref="IntPtr" />.
+        /// </summary>
+        /// <param name="buffer">The handle.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        /// <exception cref="System.InvalidOperationException">handle is invalid</exception>
+        public static explicit operator IntPtr(TurboJpegBuffer buffer)
+        {
+            if (buffer.IsInvalid)
+            {
+                throw new InvalidOperationException("handle is invalid");
+            }
+
+            return buffer.Buffer;
         }
 
         #region Implementation of IDisposable
@@ -51,7 +97,7 @@ namespace LibJpegTurbo.Net
         /// <summary>
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to 
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to
         /// release only unmanaged resources.</param>
         private void Dispose(bool disposing)
         {

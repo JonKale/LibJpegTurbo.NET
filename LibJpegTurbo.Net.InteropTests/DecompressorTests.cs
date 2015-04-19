@@ -97,7 +97,7 @@
             int height;
             Subsampling chroma;
             Colourspace colourspace;
-            var success = TurboJpegInterop.decompressHeader(this.handle.DangerousGetHandle(),
+            var success = TurboJpegInterop.decompressHeader((IntPtr)this.handle,
                                                             imageData,
                                                             imageData.Length,
                                                             out width,
@@ -121,8 +121,7 @@
             var outputBufferSize = pitch * height;
             var outputBuffer = Marshal.AllocHGlobal(outputBufferSize);
             outputBuffer.Initialise(outputBufferSize);
-
-            var success = TurboJpegInterop.decompress(this.handle.DangerousGetHandle(),
+            var success = TurboJpegInterop.decompress((IntPtr)this.handle,
                                                       imageData,
                                                       imageData.Length,
                                                       outputBuffer,
@@ -151,7 +150,7 @@
             using(var form = new Form
                              {
                                  Text = String.Format("Width: {0}, Height: {1}", image.Width, image.Height),
-                                 ClientSize = new Size(Math.Max(image.Width, 200), Math.Max(image.Height, 200)),
+                                 ClientSize = new Size(Math.Max(image.Width, 64), Math.Max(image.Height, 64)),
                                  FormBorderStyle = FormBorderStyle.FixedToolWindow
                              })
             {
@@ -176,6 +175,77 @@
             }
 
             Assert.IsTrue(isOk);
+        }
+
+        [TestMethod]
+        public void DecompressAndScaleImageBySupportedScaleFactor()
+        {
+            const int width = 96;
+            const int height = 96;
+            var pixelSize = TurboJpegInterop.PixelSize[TjPixelFormat.Rgba];
+            var pitch = width * pixelSize;
+            var outputBufferSize = pitch * height;
+            var outputBuffer = new TurboJpegBuffer(outputBufferSize);
+            outputBuffer.Buffer.Initialise(outputBufferSize);
+            var success = TurboJpegInterop.decompress((IntPtr)this.handle,
+                                                      imageData,
+                                                      imageData.Length,
+                                                      (IntPtr)outputBuffer,
+                                                      width,
+                                                      pitch,
+                                                      height,
+                                                      TjPixelFormat.Rgba,
+                                                      TurboJpegFlags.None);
+            Assert.IsTrue(success == 0);
+            Assert.IsTrue(this.ImageOutputIsOk(outputBufferSize, outputBuffer, width, height, pitch, pixelSize));
+        }
+
+        private bool ImageOutputIsOk(int outputBufferSize, TurboJpegBuffer outputBuffer, int width, int height, int pitch, int pixelSize)
+        {
+
+            var results = new byte[outputBufferSize];
+            Marshal.Copy((IntPtr)outputBuffer, results, 0, outputBufferSize);
+            var image = new Bitmap(width, height, SdiPixelFormat.Format32bppArgb);
+            for (var y = 0; y < height; ++y)
+            {
+                for (var x = 0; x < width; ++x)
+                {
+                    var baseOffset = y * pitch + x * pixelSize;
+                    var colour = Color.FromArgb(results[baseOffset + TurboJpegInterop.RedOffset[TjPixelFormat.Rgba]],
+                                                results[baseOffset + TurboJpegInterop.GreenOffset[TjPixelFormat.Rgba]],
+                                                results[baseOffset + TurboJpegInterop.BlueOffset[TjPixelFormat.Rgba]]);
+                    image.SetPixel(x, y, colour);
+                }
+            }
+
+            bool isOk;
+            using(var form = new Form
+                             {
+                                 Text = String.Format("Width: {0}, Height: {1}", image.Width, image.Height),
+                                 ClientSize = new Size(Math.Max(image.Width, 64), Math.Max(image.Height, 64)),
+                                 FormBorderStyle = FormBorderStyle.FixedToolWindow
+                             })
+            {
+                using(
+                    var pictureBox = new PictureBox
+                                     {
+                                         Image = image,
+                                         Parent = form,
+                                         Dock = DockStyle.Fill,
+                                         SizeMode = PictureBoxSizeMode.Zoom
+                                     })
+                {
+                    form.Show();
+                    isOk =
+                        MessageBox.Show("Does the image look reasonable?",
+                                        "Eyeballing…",
+                                        MessageBoxButtons.YesNo,
+                                        MessageBoxIcon.Question) == DialogResult.Yes;
+                }
+
+                form.Close();
+            }
+            return isOk;
         }
     }
 }
