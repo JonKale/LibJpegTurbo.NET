@@ -72,6 +72,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -86,6 +88,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Extensions.cs" />
     <Compile Include="GetScalingFactorTests.cs" />
     <Compile Include="MemoryAllocatorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

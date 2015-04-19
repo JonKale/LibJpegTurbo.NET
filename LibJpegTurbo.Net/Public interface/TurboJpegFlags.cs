@@ -12,7 +12,9 @@ namespace LibJpegTurbo.Net
     [Flags]
     public enum TurboJpegFlags
     {
-        /// <summary>
+        None = 0,
+
+            /// <summary>
         /// The uncompressed source/destination image is stored in bottom-up (Windows OpenGL) order not top-down (X11)
         /// order.
         /// </summary>
@@ -70,6 +72,6 @@ namespace LibJpegTurbo.Net
         /// effect on accuracy but it uses the accurate algorithm when decompressing because this has been shown to 
         /// have a larger effect.
         ///  </summary>
-        AccurateDct = 4096
+        AccurateDct = 4096,
     }
 }

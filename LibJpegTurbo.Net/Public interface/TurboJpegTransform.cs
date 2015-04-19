@@ -3,11 +3,13 @@
     #region Using Directives
 
     using System.Drawing;
+    using System.Runtime.InteropServices;
 
     #endregion
 
     /// <summary>Lossless transform parameters</summary>
-    public class TurboJpegTransform
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    public struct TurboJpegTransform
     {
         #region Constants and Fields
 
@@ -15,6 +17,14 @@
         /// The rectangle the transform applies to.
         /// </summary>
         private Rectangle rect;
+
+        [MarshalAs(UnmanagedType.I4)]
+        private TransformOperation operation;
+
+        [MarshalAs(UnmanagedType.I4)]
+        private TransformOptions options;
+
+        private ICustomFilter customFilter;
 
         #endregion
 
@@ -60,9 +70,9 @@
                                   ICustomFilter customFilter = null)
         {
             this.rect = r;
-            this.Operation = operation;
-            this.Options = options;
-            this.CustomFilter = customFilter;
+            this.operation = operation;
+            this.options = options;
+            this.customFilter = customFilter;
         }
 
         #endregion
@@ -70,16 +80,28 @@
         #region Public Properties
 
         /// <summary>Gets the custom filter instance</summary>
-        public ICustomFilter CustomFilter { get; private set; }
+        public ICustomFilter CustomFilter
+        {
+            get { return this.customFilter; }
+            private set { this.customFilter = value; }
+        }
 
         /// <summary>Gets the height.</summary>
         public int Height { get { return this.rect.Height; } }
 
         /// <summary>Gets the transform operation.</summary>
-        public TransformOperation Operation { get; private set; }
+        public TransformOperation Operation
+        {
+            get { return this.operation; }
+            private set { this.operation = value; }
+        }
 
         /// <summary>Gets the transform options.</summary>
-        public TransformOptions Options { get; private set; }
+        public TransformOptions Options
+        {
+            get { return this.options; }
+            private set { this.options = value; }
+        }
 
         /// <summary>Gets the width.</summary>
         public int Width { get { return this.rect.Width; } }

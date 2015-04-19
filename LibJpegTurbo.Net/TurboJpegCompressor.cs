@@ -152,7 +152,7 @@
             }
 
             var bufferSize =
-                (ulong) TurboJpegInterop.bufSize(this.sourceWidth, this.sourceHeight, (int) this.Subsampling);
+                (ulong) TurboJpegInterop.bufSize(this.sourceWidth, this.sourceHeight, this.Subsampling);
                 
             // having allocated memory with the libjpeg-turbo allocator, we must ensure that we release it with the 
             // matching deallocator lest Bad Things happen
@@ -165,12 +165,12 @@
                                               this.sourceWidth,
                                               this.sourcePitch,
                                               this.sourceHeight,
-                                              (int)this.sourcePixelFormat,
+                                              this.sourcePixelFormat,
                                               ref buffer,
                                               ref bufferSize,
-                                              (int)this.Subsampling,
+                                              this.Subsampling,
                                               this.jpegQuality,
-                                              (int)compressionOptions) != 0)
+                                              compressionOptions) != 0)
                 {
                     throw new Exception(Marshal.PtrToStringAnsi(TurboJpegInterop.getErrorMessage()));
                 }
@@ -224,10 +224,10 @@
                                        this.sourceWidth,
                                        this.sourcePitch,
                                        this.sourceHeight,
-                                       (int) this.sourcePixelFormat,
+                                       this.sourcePixelFormat,
                                        destinationBuffer,
-                                       (int) this.Subsampling,
-                                       (int) compressionOptions);
+                                       this.Subsampling,
+                                       compressionOptions);
             this.CompressedSize = TurboJpegInterop.bufSizeYUV(this.sourceWidth,
                                                               this.sourcePitch,
                                                               this.sourceHeight,

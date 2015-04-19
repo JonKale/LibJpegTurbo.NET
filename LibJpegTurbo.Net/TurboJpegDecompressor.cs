@@ -334,12 +334,12 @@
                 if (TurboJpegInterop.decompress(this.Handle,
                                                 this.jpegBuffer,
                                                 this.jpegBuffer.Length,
-                                                ref ptr,
+                                                ptr,
                                                 desiredWidth,
                                                 pitch,
                                                 desiredHeight,
-                                                (int) pixelFormat,
-                                                (int) flags) != 0)
+                                                pixelFormat,
+                                                flags) != 0)
                 {
                     throw new Exception(TurboJpegInterop.GetLastError());
                 }
