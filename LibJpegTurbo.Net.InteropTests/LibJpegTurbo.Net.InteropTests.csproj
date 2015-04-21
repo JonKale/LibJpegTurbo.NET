@@ -88,12 +88,12 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="CompressorTests.cs" />
+    <Compile Include="RawCompressorTests.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="GetScalingFactorTests.cs" />
     <Compile Include="MemoryAllocatorAndBufferTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="DecompressorTests.cs" />
+    <Compile Include="RawDecompressorTests.cs" />
     <Compile Include="InitTeardownTests.cs" />
   </ItemGroup>
   <ItemGroup>

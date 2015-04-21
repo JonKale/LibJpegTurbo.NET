@@ -10,7 +10,7 @@
     using SdiPixelFormat = System.Drawing.Imaging.PixelFormat;
 
     [TestClass]
-    public class DecompressorTests
+    public class RawDecompressorTests
     {
         // 64x64 square coloured 000000 ff0000 ffff00 00ff00
         //                       00ffff 0000ff ff00ff ffffff
@@ -198,6 +198,29 @@
                                                       TurboJpegFlags.None);
             Assert.IsTrue(success == 0);
             Assert.IsTrue(this.ImageOutputIsOk(outputBufferSize, outputBuffer, width, height, pitch, pixelSize));
+        }
+
+        [TestMethod]
+        public void DecompressAndScaleImageByUnsupportedScaleFactor()
+        {
+            const int width = 509;      // prime
+            const int height = 509;
+            var pixelSize = TurboJpegInterop.PixelSize[TjPixelFormat.Rgba];
+            var pitch = width * pixelSize;
+            var outputBufferSize = pitch * height;
+            var outputBuffer = new TurboJpegBuffer(outputBufferSize);
+            outputBuffer.Buffer.Initialise(outputBufferSize);
+            var success = TurboJpegInterop.decompress((IntPtr)this.handle,
+                                                      imageData,
+                                                      imageData.Length,
+                                                      (IntPtr)outputBuffer,
+                                                      width,
+                                                      pitch,
+                                                      height,
+                                                      TjPixelFormat.Rgba,
+                                                      TurboJpegFlags.None);
+            Assert.IsTrue(success == 0);
+            Assert.IsFalse(this.ImageOutputIsOk(outputBufferSize, outputBuffer, width, height, pitch, pixelSize));
         }
 
         private bool ImageOutputIsOk(int outputBufferSize, TurboJpegBuffer outputBuffer, int width, int height, int pitch, int pixelSize)
