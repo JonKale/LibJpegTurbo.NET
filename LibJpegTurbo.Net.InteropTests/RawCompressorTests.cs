@@ -26,7 +26,7 @@
         [TestInitialize]
         public void CreateCompressor()
         {
-            this.handle = new TurboJpegSafeHandle(TurboJpegInterop.initCompressor());
+            this.handle = new TurboJpegSafeHandle(NativeMethods.initCompressor());
         }
 
         [TestCleanup]
@@ -56,11 +56,11 @@
                 }
             }
 
-            var worstCaseSize = TurboJpegInterop.bufSize(width, height, Subsampling.Chroma420);
-            var outputBuffer = TurboJpegInterop.alloc(worstCaseSize);
+            var worstCaseSize = NativeMethods.bufSize(width, height, Subsampling.Chroma420);
+            var outputBuffer = NativeMethods.alloc(worstCaseSize);
             var originalOutputBufferPointer = outputBuffer;
             var outputBufferSize = (ulong)worstCaseSize;
-            var success = TurboJpegInterop.compress((IntPtr) this.handle,
+            var success = NativeMethods.compress((IntPtr) this.handle,
                                                     imageBytes,
                                                     width,
                                                     pitch,
@@ -103,10 +103,10 @@
             }
 
             const int preallocatedSize = 256;
-            var outputBuffer = TurboJpegInterop.alloc(preallocatedSize);
+            var outputBuffer = NativeMethods.alloc(preallocatedSize);
             var originalOutputBufferPointer = outputBuffer;
             var outputBufferSize = (ulong)preallocatedSize;
-            var success = TurboJpegInterop.compress((IntPtr)this.handle,
+            var success = NativeMethods.compress((IntPtr)this.handle,
                                                     imageBytes,
                                                     width,
                                                     pitch,
@@ -150,7 +150,7 @@
 
             var outputBuffer = IntPtr.Zero;
             var outputBufferSize = 0UL;
-            var success = TurboJpegInterop.compress((IntPtr)this.handle,
+            var success = NativeMethods.compress((IntPtr)this.handle,
                                                     imageBytes,
                                                     width,
                                                     pitch,

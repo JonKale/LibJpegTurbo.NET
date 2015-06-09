@@ -14,7 +14,7 @@ namespace LibJpegTurbo.Net
     {
         None = 0,
 
-            /// <summary>
+        /// <summary>
         /// The uncompressed source/destination image is stored in bottom-up (Windows OpenGL) order not top-down (X11)
         /// order.
         /// </summary>
@@ -49,8 +49,8 @@ namespace LibJpegTurbo.Net
         FastUpsample = 256,
 
         /// <summary>
-        /// Disable buffer (re)allocation. If passed to <see cref="TurboJpegInterop.compress"/> or 
-        /// <see cref="TurboJpegInterop.transform"/>, this flag will cause those functions to generate an error if the 
+        /// Disable buffer (re)allocation. If passed to <see cref="NativeMethods.compress"/> or 
+        /// <see cref="NativeMethods.transform"/>, this flag will cause those functions to generate an error if the 
         /// JPEG image buffer is invalid or too small rather than attempting to allocate or reallocate that buffer. 
         /// This reproduces the behavior of earlier versions of TurboJPEG.
         /// </summary>

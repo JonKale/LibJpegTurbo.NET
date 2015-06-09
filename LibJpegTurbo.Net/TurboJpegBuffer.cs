@@ -3,13 +3,14 @@ namespace LibJpegTurbo.Net
     #region
 
     using System;
+    using System.Diagnostics.Contracts;
 
     #endregion
 
     /// <summary>
     /// Represents a buffer allocated by libjpeg-turbo on its heap.
     /// </summary>
-    public class TurboJpegBuffer : IDisposable
+    internal class TurboJpegBuffer : IDisposable
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="TurboJpegBuffer" /> class.
@@ -18,10 +19,8 @@ namespace LibJpegTurbo.Net
         /// <param name="bufferSize">Size of the buffer.</param>
         public TurboJpegBuffer(IntPtr buffer, int bufferSize)
         {
-            if (buffer == IntPtr.Zero)
-            {
-                throw new ArgumentOutOfRangeException("buffer", "buffer must not be the NUL pointer");
-            }
+            Contract.Requires(buffer != IntPtr.Zero, "buffer must not be the null pointer");
+            Contract.Requires(bufferSize >= 0, "bufferSize must be non-negative");
 
             this.Buffer = buffer;
             this.BufferSize = bufferSize;
@@ -34,7 +33,9 @@ namespace LibJpegTurbo.Net
         /// <param name="bufferSize">Size of the buffer.</param>
         public TurboJpegBuffer(int bufferSize)
         {
-            this.Buffer = TurboJpegInterop.alloc(bufferSize);
+            Contract.Requires(bufferSize >= 0, "bufferSize must be non-negative");
+
+            this.Buffer = NativeMethods.alloc(bufferSize);
             this.BufferSize = bufferSize;
         }
 
@@ -75,6 +76,8 @@ namespace LibJpegTurbo.Net
         /// <exception cref="System.InvalidOperationException">handle is invalid</exception>
         public static explicit operator IntPtr(TurboJpegBuffer buffer)
         {
+            Contract.Requires(buffer != null);            
+
             if (buffer.IsInvalid)
             {
                 throw new InvalidOperationException("handle is invalid");
@@ -103,7 +106,7 @@ namespace LibJpegTurbo.Net
         {
             if (this.Buffer != IntPtr.Zero)
             {
-                TurboJpegInterop.free(this.Buffer);
+                NativeMethods.free(this.Buffer);
                 this.Buffer = IntPtr.Zero;
             }
         }

@@ -1,11 +1,15 @@
 namespace LibJpegTurbo.Net
 {
     using System;
+    using System.Diagnostics.Contracts;
 
-    public class TurboJpegBase 
+    /// <summary>
+    /// Base class for the compressor and decompressor.
+    /// </summary>
+    internal abstract class TurboJpegBase : IDisposable
     {
         /// <summary>
-        /// The instance of a TurboJPEG compressor that we're wrapping.
+        /// The instance of a TurboJPEG compressor or decompressor that we're wrapping.
         /// </summary>
         private readonly TurboJpegSafeHandle turboJpegObject;
 
@@ -15,6 +19,8 @@ namespace LibJpegTurbo.Net
         /// <param name="turboJpegHandle">The TurboJPEG handle.</param>
         protected TurboJpegBase(IntPtr turboJpegHandle)
         {
+            Contract.Requires(turboJpegHandle != null);
+
             this.turboJpegObject = new TurboJpegSafeHandle(turboJpegHandle);
         }
 
@@ -48,7 +54,9 @@ namespace LibJpegTurbo.Net
         /// release only unmanaged resources.</param>
         protected void Dispose(bool disposing)
         {
-            if (this.turboJpegObject != null && !this.turboJpegObject.IsInvalid)
+            // once Dispose() has been called on a SafeHandle it is no longer valid
+            // if we get called by the finaliser then all bets are off; bail immediately
+            if (disposing && this.turboJpegObject != null && !this.turboJpegObject.IsInvalid)
             {
                 this.turboJpegObject.Dispose();
             }

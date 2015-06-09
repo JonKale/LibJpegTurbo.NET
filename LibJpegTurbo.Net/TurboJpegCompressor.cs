@@ -3,6 +3,7 @@
     #region Using Directives
 
     using System;
+    using System.Diagnostics.Contracts;
     using System.Runtime.InteropServices;
 
     #endregion
@@ -10,12 +11,9 @@
     /// <summary>
     /// TurboJPEG compressor
     /// </summary>
-    public sealed class TurboJpegCompressor : TurboJpegBase
+    internal sealed class TurboJpegCompressor : TurboJpegBase
     {
         #region Constants and Fields
-
-        private const string NoAssocError = "No source image is associated with this instance";
-        private const string JpegQualityNotSet = "JPEG quality not set";
 
         /// <summary>
         /// The JPEG quality level used for compress operations.
@@ -28,7 +26,7 @@
         private byte[] sourceBuffer;
 
         /// <summary>
-        /// The height of the source image.
+        /// The height of the region of the source image to compress.
         /// </summary>
         private int sourceHeight;
 
@@ -43,12 +41,18 @@
         private PixelFormat sourcePixelFormat;
 
         /// <summary>
-        /// The width of the source image.
+        /// The width of the region of the source image to compress.
         /// </summary>
         private int sourceWidth;
 
+        /// <summary>
+        /// The X offset of the region of the source image to compress.
+        /// </summary>
         private int sourceX = -1;
 
+        /// <summary>
+        /// The Y offset of the region of the source image to compress.
+        /// </summary>
         private int sourceY = -1;
 
         #endregion
@@ -57,7 +61,7 @@
 
         /// <summary>Create a TurboJPEG compressor instance.</summary>
         public TurboJpegCompressor()
-            : base(TurboJpegInterop.initCompressor())
+            : base(NativeMethods.initCompressor())
         {
         }
 
@@ -90,8 +94,15 @@
                                    int pitch,
                                    int height,
                                    PixelFormat pixelFormat)
-            : base(TurboJpegInterop.initCompressor())
+            : base(NativeMethods.initCompressor())
         {
+            Contract.Requires(sourceImage != null, "sourceImage must not be null");
+            Contract.Requires(x >= 0, "x must be non-negative");
+            Contract.Requires(y >= 0, "y must be non-negative");
+            Contract.Requires(width > 0, "width must be greater than zero");
+            Contract.Requires(height > 0, "height must be greater than zero");
+            Contract.Requires(pitch >= 0, "pitch must be non-negative");
+
             this.SetSourceImage(sourceImage, x, y, width, pitch, height, pixelFormat);
         }
 
@@ -108,10 +119,7 @@
         {
             set
             {
-                if (value < 1 || value > 100)
-                {
-                    throw new ArgumentOutOfRangeException("value", "JpegQuality must be between 1 and 100");
-                }
+                Contract.Requires(value >= 1 && value <= 100, "JpegQuality must be between 1 and 100");
 
                 this.jpegQuality = value;
             }
@@ -141,27 +149,21 @@
         /// <exception cref="System.InvalidOperationException">The source image has not been set.</exception>
         public TurboJpegBuffer Compress(TurboJpegFlags compressionOptions)
         {
-            if (this.sourceBuffer == null)
-            {
-                throw new InvalidOperationException(NoAssocError);
-            }
-
-            if (this.jpegQuality < 0)
-            {
-                throw new InvalidOperationException(JpegQualityNotSet);
-            }
+            Contract.Requires(Enum.IsDefined(typeof(TurboJpegFlags), compressionOptions));
+            Contract.Assume(this.sourceBuffer != null, "No source image is associated with this instance");
+            Contract.Assume(this.jpegQuality >= 0, "JPEG quality not set");
 
             var bufferSize =
-                (ulong) TurboJpegInterop.bufSize(this.sourceWidth, this.sourceHeight, this.Subsampling);
+                (ulong) NativeMethods.bufSize(this.sourceWidth, this.sourceHeight, this.Subsampling);
                 
             // having allocated memory with the libjpeg-turbo allocator, we must ensure that we release it with the 
             // matching deallocator lest Bad Things happen
-            var buffer = TurboJpegInterop.alloc((int) bufferSize);
+            var buffer = NativeMethods.alloc((int) bufferSize);
             try
             {
                 if (this.sourceX >= 0 || this.sourceY >= 0)
                 {
-                    if (TurboJpegInterop.compress(this.Handle,
+                    if (NativeMethods.compress(this.Handle,
                                                   this.sourceBuffer,
                                                   this.sourceWidth,
                                                   this.sourcePitch,
@@ -173,7 +175,7 @@
                                                   this.jpegQuality,
                                                   compressionOptions) != 0)
                     {
-                        throw new Exception(Marshal.PtrToStringAnsi(TurboJpegInterop.getErrorMessage()));
+                        throw new Exception(Marshal.PtrToStringAnsi(NativeMethods.getErrorMessage()));
                     }
                 }
 
@@ -183,7 +185,7 @@
             }
             catch
             {
-                TurboJpegInterop.free(buffer);
+                NativeMethods.free(buffer);
                 throw;
             }
         }
@@ -211,17 +213,10 @@
         /// <param name="compressionOptions">Set of flags controlling compression.</param>
         public void EncodeYuv(byte[] destinationBuffer, TurboJpegFlags compressionOptions)
         {
-            if (destinationBuffer == null)
-            {
-                throw new ArgumentNullException("destinationBuffer");
-            }
+            Contract.Requires(destinationBuffer != null, "destinationBuffer must not be null");
+            Contract.Assume(this.sourceBuffer != null, "No source image is associated with this instance");
 
-            if (this.sourceBuffer == null)
-            {
-                throw new InvalidOperationException(NoAssocError);
-            }
-
-            TurboJpegInterop.encodeYUV(this.Handle,
+            NativeMethods.encodeYUV(this.Handle,
                                        this.sourceBuffer,
                                        this.sourceWidth,
                                        this.sourcePitch,
@@ -230,7 +225,7 @@
                                        destinationBuffer,
                                        this.Subsampling,
                                        compressionOptions);
-            this.CompressedSize = TurboJpegInterop.bufSizeYUV(this.sourceWidth,
+            this.CompressedSize = NativeMethods.bufSizeYUV(this.sourceWidth,
                                                               this.sourcePitch,
                                                               this.sourceHeight,
                                                               this.Subsampling);
@@ -244,14 +239,13 @@
         /// <returns> a buffer containing a YUV planar image </returns>
         public byte[] EncodeYuv(TurboJpegFlags compressionOptions)
         {
-            if (this.sourceWidth < 1 || this.sourceHeight < 1)
-            {
-                throw new InvalidOperationException(NoAssocError);
-            }
+            Contract.Ensures(Contract.Result<byte[]>().Length != 0, "output buffer must not be zero bytes long");
+            Contract.Assume(this.sourceWidth > 0 && this.sourceHeight > 0,
+                            "No source image is associated with this instance");
 
             var buf =
                 new byte[
-                    TurboJpegInterop.bufSizeYUV(this.sourceWidth,
+                    NativeMethods.bufSizeYUV(this.sourceWidth,
                                                 this.sourcePitch,
                                                 this.sourceHeight,
                                                 this.Subsampling)];
@@ -288,35 +282,12 @@
                                    int height,
                                    PixelFormat pixelFormat)
         {
-            if (sourceImage == null)
-            {
-                throw new ArgumentNullException("sourceImage");
-            }
-
-            if (x < 0)
-            {
-                throw new ArgumentOutOfRangeException("x", "x must be non-negative");
-            }
-
-            if (y < 0)
-            {
-                throw new ArgumentOutOfRangeException("y", "y must be non-negative");
-            }
-
-            if (width < 1)
-            {
-                throw new ArgumentOutOfRangeException("width", "width must be greater than zero");
-            }
-
-            if (height < 1)
-            {
-                throw new ArgumentOutOfRangeException("height", "height must be greater than zero");
-            }
-
-            if (pitch < 0)
-            {
-                throw new ArgumentOutOfRangeException("pitch", "pitch must be non-negative");
-            }
+            Contract.Requires(sourceImage != null, "sourceImage must not be null");
+            Contract.Requires(x >= 0, "x must be non-negative");
+            Contract.Requires(y >= 0, "y must be non-negative");
+            Contract.Requires(width > 0, "width must be greater than zero");
+            Contract.Requires(height > 0, "height must be greater than zero");
+            Contract.Requires(pitch >= 0, "pitch must be non-negative");
 
             this.sourceBuffer = sourceImage;
             this.sourceWidth = width;
@@ -325,13 +296,6 @@
             this.sourcePixelFormat = pixelFormat;
             this.sourceX = x;
             this.sourceY = y;
-        }
-
-        [Obsolete("Use SetSourceImage(sbyte[], int, int, int, int, int, PixelFormat)")]
-        public void SetSourceImage(byte[] sourceImage, int width, int pitch, int height, PixelFormat pixelFormat)
-        {
-            this.SetSourceImage(sourceImage, 0, 0, width, pitch, height, pixelFormat);
-            this.sourceX = this.sourceY = -1;
         }
 
         #endregion

@@ -2,12 +2,14 @@
 {
     #region Using Directives
 
+    using System;
+    using System.Diagnostics.Contracts;
     using System.Drawing;
     using System.Runtime.InteropServices;
 
     #endregion
 
-    /// <summary>Lossless transform parameters</summary>
+    /// <summary>Lossless transform parameters.</summary>
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     public struct TurboJpegTransform
     {
@@ -16,15 +18,24 @@
         /// <summary>
         /// The rectangle the transform applies to.
         /// </summary>
-        private Rectangle rect;
+        private readonly Rectangle rect;
 
+        /// <summary>
+        /// The transform operation.
+        /// </summary>
         [MarshalAs(UnmanagedType.I4)]
-        private TransformOperation operation;
+        private readonly TransformOperation operation;
 
+        /// <summary>
+        /// The transform options.
+        /// </summary>
         [MarshalAs(UnmanagedType.I4)]
-        private TransformOptions options;
+        private readonly TransformOptions options;
 
-        private ICustomFilter customFilter;
+        /// <summary>
+        /// The custom filter.
+        /// </summary>
+        private readonly ICustomFilter customFilter;
 
         #endregion
 
@@ -37,9 +48,9 @@
         /// width (see <see cref="TurboJpegUtilities.GetMcuWidth" />).</param>
         /// <param name="y">The upper boundary of the cropping region. This must be evenly divisible by the MCU block 
         /// height (see <see cref="TurboJpegUtilities.GetMcuHeight" />).</param>
-        /// <param name="w">The width of the cropping region. Setting this to 0 is the equivalent of setting it to 
+        /// <param name="width">The width of the cropping region. Setting this to 0 is the equivalent of setting it to 
         /// (width of the source JPEG image - <paramref name="x"/>).</param>
-        /// <param name="h">The height of the cropping region. Setting this to 0 is the equivalent of setting it to 
+        /// <param name="height">The height of the cropping region. Setting this to 0 is the equivalent of setting it to 
         /// (height of the source JPEG image - <paramref name="y"/>).</param>
         /// <param name="operation">The transform operation.</param>
         /// <param name="options">One or more of the transform options.</param>
@@ -47,13 +58,19 @@
         /// interface, or <c>null</c> if no custom filter is needed.</param>
         public TurboJpegTransform(int x,
                                   int y,
-                                  int w,
-                                  int h,
+                                  int width,
+                                  int height,
                                   TransformOperation operation,
                                   TransformOptions options,
                                   ICustomFilter customFilter = null)
-            : this(new Rectangle(x, y, w, h), operation, options, customFilter)
+            : this(new Rectangle(x, y, width, height), operation, options, customFilter)
         {
+            Contract.Requires(x >= 0, "x must be non-negative");
+            Contract.Requires(y >= 0, "y must be non-negative");
+            Contract.Requires(width >= 0, "width must be non-negative");
+            Contract.Requires(height >= 0, "height must be non-negative");
+            Contract.Requires(Enum.IsDefined(typeof(TransformOperation), operation));
+            Contract.Requires(Enum.IsDefined(typeof(TransformOptions), options));
         }
 
         /// <summary>Create a new lossless transform instance with the given parameters.</summary>
@@ -69,6 +86,13 @@
                                   TransformOptions options,
                                   ICustomFilter customFilter = null)
         {
+            Contract.Requires(r.X >= 0, "Rectangle X must be non-negative");
+            Contract.Requires(r.Y >= 0, "Rectangle Y must be non-negative");
+            Contract.Requires(r.Width >= 0, "Rectangle width must be non-negative");
+            Contract.Requires(r.Height >= 0, "Rectangle height must be non-negative");
+            Contract.Requires(Enum.IsDefined(typeof(TransformOperation), operation));
+            Contract.Requires(Enum.IsDefined(typeof(TransformOptions), options));
+
             this.rect = r;
             this.operation = operation;
             this.options = options;
@@ -79,29 +103,17 @@
 
         #region Public Properties
 
-        /// <summary>Gets the custom filter instance</summary>
-        public ICustomFilter CustomFilter
-        {
-            get { return this.customFilter; }
-            private set { this.customFilter = value; }
-        }
+        /// <summary>Gets the custom filter instance.</summary>
+        public ICustomFilter CustomFilter { get { return this.customFilter; } }
 
         /// <summary>Gets the height.</summary>
         public int Height { get { return this.rect.Height; } }
 
         /// <summary>Gets the transform operation.</summary>
-        public TransformOperation Operation
-        {
-            get { return this.operation; }
-            private set { this.operation = value; }
-        }
+        public TransformOperation Operation { get { return this.operation; } }
 
         /// <summary>Gets the transform options.</summary>
-        public TransformOptions Options
-        {
-            get { return this.options; }
-            private set { this.options = value; }
-        }
+        public TransformOptions Options { get { return this.options; } }
 
         /// <summary>Gets the width.</summary>
         public int Width { get { return this.rect.Width; } }

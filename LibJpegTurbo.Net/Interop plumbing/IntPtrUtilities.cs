@@ -3,8 +3,7 @@
     #region
 
     using System;
-    using System.Diagnostics;
-    using System.Drawing;
+    using System.Diagnostics.Contracts;
     using System.Runtime.InteropServices;
 
     #endregion
@@ -22,6 +21,9 @@
         /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static byte[] ToByteArray(this IntPtr pointer, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(elements >= 0);
+
             var array = new byte[elements];
             Marshal.Copy(pointer, array, 0, elements);
             return array;
@@ -35,6 +37,9 @@
         /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static char[] ToCharArray(this IntPtr pointer, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(elements >= 0);
+
             var array = new char[elements];
             Marshal.Copy(pointer, array, 0, elements);
             return array;
@@ -48,6 +53,9 @@
         /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static double[] ToDoubleArray(this IntPtr pointer, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(elements >= 0);
+
             var array = new double[elements];
             Marshal.Copy(pointer, array, 0, elements);
             return array;
@@ -61,6 +69,9 @@
         /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static short[] ToShortArray(this IntPtr pointer, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(elements >= 0);
+
             var array = new short[elements];
             Marshal.Copy(pointer, array, 0, elements);
             return array;
@@ -74,6 +85,9 @@
         /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static int[] ToIntArray(this IntPtr pointer, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(elements >= 0);
+
             var array = new int[elements];
             Marshal.Copy(pointer, array, 0, elements);
             return array;
@@ -87,6 +101,9 @@
         /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static long[] ToLongArray(this IntPtr pointer, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(elements >= 0);
+
             var array = new long[elements];
             Marshal.Copy(pointer, array, 0, elements);
             return array;
@@ -100,6 +117,9 @@
         /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static IntPtr[] ToIntPtrArray(this IntPtr pointer, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(elements >= 0);
+
             var array = new IntPtr[elements];
             Marshal.Copy(pointer, array, 0, elements);
             return array;
@@ -113,6 +133,9 @@
         /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static float[] ToFloatArray(this IntPtr pointer, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(elements >= 0);
+
             var array = new float[elements];
             Marshal.Copy(pointer, array, 0, elements);
             return array;
@@ -126,6 +149,9 @@
         /// <returns>An array of the specified size populated from <paramref name="pointer" />.</returns>
         public static TurboJpegScalingFactor[] ToTurboJpegScalingFactorArray(this IntPtr pointer, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(elements >= 0);
+
             var array = new TurboJpegScalingFactor[elements];
             var structSize = Marshal.SizeOf(typeof(TurboJpegScalingFactor));
             var j = pointer;
@@ -147,7 +173,13 @@
         /// <remarks>This method does not support ragged arrays. Instead, use <see cref="ToByteArrays(IntPtr, int, int[])" />.</remarks>
         public static byte[][] ToByteArrays(this IntPtr pointer, int arrays, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements >= 0);
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Contract.Assume(arrayStarts.Length == arrays);
+
             var output = new byte[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -167,8 +199,15 @@
         /// <remarks>This method should be used for ragged arrays.</remarks>
         public static byte[][] ToByteArrays(this IntPtr pointer, int arrays, int[] elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements != null);
+            Contract.Requires(Contract.ForAll(elements, _ => _ >= 0));
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
-            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
+            Contract.Assume(arrayStarts.Length == arrays);
+            Contract.Assume(elements.Length == arrays);
+
             var output = new byte[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -191,7 +230,13 @@
         /// </remarks>
         public static char[][] ToCharArrays(this IntPtr pointer, int arrays, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements >= 0);
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Contract.Assume(arrayStarts.Length == arrays);
+
             var output = new char[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -211,8 +256,15 @@
         /// <remarks>This method should be used for ragged arrays.</remarks>
         public static char[][] ToCharArrays(this IntPtr pointer, int arrays, int[] elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements != null);
+            Contract.Requires(Contract.ForAll(elements, _ => _ >= 0));
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
-            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
+            Contract.Assume(arrayStarts.Length == arrays);
+            Contract.Assume(elements.Length == arrays);
+
             var output = new char[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -235,7 +287,13 @@
         /// </remarks>
         public static double[][] ToDoubleArrays(this IntPtr pointer, int arrays, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements >= 0);
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Contract.Assume(arrayStarts.Length == arrays);
+
             var output = new double[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -255,8 +313,15 @@
         /// <remarks>This method should be used for ragged arrays.</remarks>
         public static double[][] ToDoubleArrays(this IntPtr pointer, int arrays, int[] elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements != null);
+            Contract.Requires(Contract.ForAll(elements, _ => _ >= 0));
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
-            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
+            Contract.Assume(arrayStarts.Length == arrays);
+            Contract.Assume(elements.Length == arrays);
+
             var output = new double[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -279,7 +344,13 @@
         /// </remarks>
         public static short[][] ToShortArrays(this IntPtr pointer, int arrays, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements >= 0);
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Contract.Assume(arrayStarts.Length == arrays);
+
             var output = new short[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -299,8 +370,15 @@
         /// <remarks>This method should be used for ragged arrays.</remarks>
         public static short[][] ToShortArrays(this IntPtr pointer, int arrays, int[] elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements != null);
+            Contract.Requires(Contract.ForAll(elements, _ => _ >= 0));
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
-            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
+            Contract.Assume(arrayStarts.Length == arrays);
+            Contract.Assume(elements.Length == arrays);
+
             var output = new short[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -323,7 +401,13 @@
         /// </remarks>
         public static int[][] ToIntArrays(this IntPtr pointer, int arrays, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements >= 0);
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Contract.Assume(arrayStarts.Length == arrays);
+
             var output = new int[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -343,8 +427,15 @@
         /// <remarks>This method should be used for ragged arrays.</remarks>
         public static int[][] ToIntArrays(this IntPtr pointer, int arrays, int[] elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements != null);
+            Contract.Requires(Contract.ForAll(elements, _ => _ >= 0));
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
-            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
+            Contract.Assume(arrayStarts.Length == arrays);
+            Contract.Assume(elements.Length == arrays);
+
             var output = new int[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -367,7 +458,13 @@
         /// </remarks>
         public static long[][] ToLongArrays(this IntPtr pointer, int arrays, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements >= 0);
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Contract.Assume(arrayStarts.Length == arrays);
+
             var output = new long[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -387,8 +484,15 @@
         /// <remarks>This method should be used for ragged arrays.</remarks>
         public static long[][] ToLongArrays(this IntPtr pointer, int arrays, int[] elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements != null);
+            Contract.Requires(Contract.ForAll(elements, _ => _ >= 0));
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
-            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
+            Contract.Assume(arrayStarts.Length == arrays);
+            Contract.Assume(elements.Length == arrays);
+
             var output = new long[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -411,7 +515,13 @@
         /// </remarks>
         public static IntPtr[][] ToIntPtrArrays(this IntPtr pointer, int arrays, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements >= 0);
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Contract.Assume(arrayStarts.Length == arrays);
+
             var output = new IntPtr[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -431,8 +541,15 @@
         /// <remarks>This method should be used for ragged arrays.</remarks>
         public static IntPtr[][] ToIntPtrArrays(this IntPtr pointer, int arrays, int[] elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements != null);
+            Contract.Requires(Contract.ForAll(elements, _ => _ >= 0));
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
-            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
+            Contract.Assume(arrayStarts.Length == arrays);
+            Contract.Assume(elements.Length == arrays);
+
             var output = new IntPtr[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -455,7 +572,13 @@
         /// </remarks>
         public static float[][] ToFloatArrays(this IntPtr pointer, int arrays, int elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements >= 0);
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
+            Contract.Assume(arrayStarts.Length == arrays);
+
             var output = new float[arrays][];
             for (var i = 0; i < arrays; ++i)
             {
@@ -475,8 +598,15 @@
         /// <remarks>This method should be used for ragged arrays.</remarks>
         public static float[][] ToFloatArrays(this IntPtr pointer, int arrays, int[] elements)
         {
+            Contract.Requires(pointer != IntPtr.Zero);
+            Contract.Requires(arrays >= 0);
+            Contract.Requires(elements != null);
+            Contract.Requires(Contract.ForAll(elements, _ => _ >= 0));
+
             var arrayStarts = pointer.ToIntPtrArray(arrays);
-            Debug.Assert(arrayStarts.Length != elements.Length, "arrayStarts.Length != elements.Length");
+            Contract.Assume(arrayStarts.Length == arrays);
+            Contract.Assume(elements.Length == arrays);
+
             var output = new float[arrays][];
             for (var i = 0; i < arrays; ++i)
             {

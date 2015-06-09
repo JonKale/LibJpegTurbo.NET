@@ -81,7 +81,7 @@
         [TestInitialize]
         public void CreateDecompressor()
         {
-            this.handle = new TurboJpegSafeHandle(TurboJpegInterop.initDecompressor());
+            this.handle = new TurboJpegSafeHandle(NativeMethods.initDecompressor());
         }
 
         [TestCleanup]
@@ -97,7 +97,7 @@
             int height;
             Subsampling chroma;
             Colourspace colourspace;
-            var success = TurboJpegInterop.decompressHeader((IntPtr)this.handle,
+            var success = NativeMethods.decompressHeader((IntPtr)this.handle,
                                                             imageData,
                                                             imageData.Length,
                                                             out width,
@@ -121,7 +121,7 @@
             var outputBufferSize = pitch * height;
             var outputBuffer = Marshal.AllocHGlobal(outputBufferSize);
             outputBuffer.Initialise(outputBufferSize);
-            var success = TurboJpegInterop.decompress((IntPtr)this.handle,
+            var success = NativeMethods.decompress((IntPtr)this.handle,
                                                       imageData,
                                                       imageData.Length,
                                                       outputBuffer,
@@ -187,7 +187,7 @@
             var outputBufferSize = pitch * height;
             var outputBuffer = new TurboJpegBuffer(outputBufferSize);
             outputBuffer.Buffer.Initialise(outputBufferSize);
-            var success = TurboJpegInterop.decompress((IntPtr)this.handle,
+            var success = NativeMethods.decompress((IntPtr)this.handle,
                                                       imageData,
                                                       imageData.Length,
                                                       (IntPtr)outputBuffer,
@@ -210,7 +210,7 @@
             var outputBufferSize = pitch * height;
             var outputBuffer = new TurboJpegBuffer(outputBufferSize);
             outputBuffer.Buffer.Initialise(outputBufferSize);
-            var success = TurboJpegInterop.decompress((IntPtr)this.handle,
+            var success = NativeMethods.decompress((IntPtr)this.handle,
                                                       imageData,
                                                       imageData.Length,
                                                       (IntPtr)outputBuffer,

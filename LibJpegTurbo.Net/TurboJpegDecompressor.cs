@@ -1,36 +1,26 @@
 ﻿namespace LibJpegTurbo.Net
 {
-    #region
-
     using System;
+    using System.Diagnostics.Contracts;
     using System.Runtime.InteropServices;
 
-    #endregion
-
     /// <summary>TurboJPEG decompressor</summary>
-    public class TurboJpegDecompressor : TurboJpegBase
+    internal class TurboJpegDecompressor : TurboJpegBase
     {
-        private const string NoAssocError = "No JPEG image is associated with this instance";
-
         private byte[] jpegBuffer;
-        public int JpegHeight { get; protected set; }
-        public Subsampling JpegSubsampling { get; protected set; }
-        public int JpegWidth { get; protected set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TurboJpegDecompressor"/> class with the specified object.
+        /// Initializes a new instance of the <see cref="TurboJpegDecompressor" /> class with the specified object.
         /// </summary>
         /// <param name="handle">The handle.</param>
         protected TurboJpegDecompressor(IntPtr handle)
             : base(handle)
-        {
-        }
-        
+        {}
+
         /// <summary>Create a TurboJPEG decompresssor instance.</summary>
         public TurboJpegDecompressor()
-            : base(TurboJpegInterop.initDecompressor())
-        {
-        }
+            : base(NativeMethods.initDecompressor())
+        {}
 
         /// <summary>
         /// Create a TurboJPEG decompressor instance and associate the JPEG image stored in <code>jpegImage</code> with
@@ -38,9 +28,32 @@
         /// </summary>
         /// <param name="jpegImage"> JPEG image buffer (size of the JPEG image is assumed to be the length of the array) </param>
         public TurboJpegDecompressor(byte[] jpegImage)
-            : base(TurboJpegInterop.initDecompressor())
+            : base(NativeMethods.initDecompressor())
         {
+            Contract.Requires(jpegImage != null);
+
             this.SetJpegImage(jpegImage);
+        }
+
+        /// <summary>
+        /// The height of the image.
+        /// </summary>
+        private int jpegHeight;
+
+        /// <summary>
+        /// The chroma subsampling used by the image.
+        /// </summary>
+        private Subsampling jpegSubsampling;
+
+        /// <summary>
+        /// The width of the image.
+        /// </summary>
+        private int jpegWidth;
+
+        protected TurboJpegDecompressor(byte[] destinationBuffer, int transformedSize)
+            : base(NativeMethods.initDecompressor())
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>Returns the width of the JPEG image associated with this decompressor instance.</summary>
@@ -48,12 +61,9 @@
         {
             get
             {
-                if (this.JpegWidth < 1)
-                {
-                    throw new InvalidOperationException(NoAssocError);
-                }
+                Contract.Assume(this.jpegWidth > 0, "No JPEG image is associated with this instance");
 
-                return this.JpegWidth;
+                return this.jpegWidth;
             }
         }
 
@@ -62,12 +72,9 @@
         {
             get
             {
-                if (this.JpegHeight < 1)
-                {
-                    throw new InvalidOperationException(NoAssocError);
-                }
+                Contract.Assume(this.jpegHeight > 0, "No JPEG image is associated with this instance");
 
-                return this.JpegHeight;
+                return this.jpegHeight;
             }
         }
 
@@ -77,7 +84,7 @@
         /// </summary>
         public Subsampling Subsampling
         {
-            get { return this.JpegSubsampling; }
+            get { return this.jpegSubsampling; }
         }
 
         /// <summary>Returns the JPEG image buffer associated with this decompressor instance.</summary>
@@ -85,10 +92,7 @@
         {
             get
             {
-                if (this.jpegBuffer == null)
-                {
-                    throw new InvalidOperationException(NoAssocError);
-                }
+                Contract.Assume(this.jpegBuffer != null, "No JPEG image is associated with this instance");
 
                 return this.jpegBuffer;
             }
@@ -99,27 +103,26 @@
         {
             get
             {
-                if (this.jpegBuffer.Length < 1)
-                {
-                    throw new InvalidOperationException(NoAssocError);
-                }
+                Contract.Assume(this.jpegBuffer != null && this.jpegBuffer.Length < 1,
+                                "No JPEG image is associated with this instance");
 
                 return this.jpegBuffer.Length;
             }
         }
 
         /// <summary>
-        /// Associate the JPEG image of length <code>imageSize</code> bytes stored in
-        /// <code>jpegImage</code> with this decompressor instance.  This image will be used as the source image for subsequent
-        /// decompress operations.
+        /// Gets the JPEG colourspace.
+        /// </summary>
+        public Colourspace JpegColourspace { get; private set; }
+
+        /// <summary>
+        /// Associate the JPEG image of length <code>imageSize</code> bytes stored in  <code>jpegImage</code> with this
+        /// decompressor instance.  This image will be used as the source image for subsequent decompress operations.
         /// </summary>
         /// <param name="jpegImage"> JPEG image buffer</param>
         public void SetJpegImage(byte[] jpegImage)
         {
-            if (jpegImage == null)
-            {
-                throw new  ArgumentNullException("jpegImage");
-            }
+            Contract.Requires(jpegImage != null);
 
             this.jpegBuffer = jpegImage;
             int width;
@@ -127,27 +130,22 @@
             Subsampling chroma;
             Colourspace colourspace;
 
-            if (TurboJpegInterop.decompressHeader(this.Handle,
+            if (NativeMethods.decompressHeader(this.Handle,
                                                   this.jpegBuffer,
                                                   this.jpegBuffer.Length,
                                                   out width,
                                                   out height,
-                                                  out chroma, 
+                                                  out chroma,
                                                   out colourspace) != 0)
             {
-                throw new Exception(Marshal.PtrToStringAnsi(TurboJpegInterop.getErrorMessage()));
+                throw new Exception(Marshal.PtrToStringAnsi(NativeMethods.getErrorMessage()));
             }
 
-            this.JpegWidth = width;
-            this.JpegHeight = height;
-            this.JpegSubsampling = chroma;
+            this.jpegWidth = width;
+            this.jpegHeight = height;
+            this.jpegSubsampling = chroma;
             this.JpegColourspace = colourspace;
         }
-
-        /// <summary>
-        /// Gets the JPEG colourspace.
-        /// </summary>
-        public Colourspace JpegColourspace { get; private set; }
 
         /// <summary>
         /// Returns the width of the largest scaled-down image that the TurboJPEG decompressor can generate without
@@ -169,45 +167,41 @@
         /// </returns>
         public int GetScaledWidth(int desiredWidth, int desiredHeight)
         {
-            if (this.JpegWidth < 1 || this.JpegHeight < 1)
-            {
-                throw new InvalidOperationException(NoAssocError);
-            }
+            Contract.Requires(desiredWidth >= 0, "desiredWidth must be non-negative");
+            Contract.Requires(desiredHeight >= 0, "desiredHeight must be non-negative");
 
-            if (desiredWidth < 0 || desiredHeight < 0)
-            {
-                throw new Exception("Invalid argument in getScaledWidth()");
-            }
+            Contract.Assume(this.jpegWidth > 0, "No JPEG image is associated with this instance");
+            Contract.Assume(this.jpegHeight > 0, "No JPEG image is associated with this instance");
 
             var scalingFactors = TurboJpegInterop.ScalingFactors;
 
             if (desiredWidth == 0)
             {
-                desiredWidth = this.JpegWidth;
+                desiredWidth = this.jpegWidth;
             }
 
             if (desiredHeight == 0)
             {
-                desiredHeight = this.JpegHeight;
+                desiredHeight = this.jpegHeight;
             }
 
-            var scaledWidth = this.JpegWidth;
-            var scaledHeight = this.JpegHeight;
+            var scaledWidth = this.jpegWidth;
+            var scaledHeight = this.jpegHeight;
             foreach (var scalingFactor in scalingFactors)
             {
-                scaledWidth = scalingFactor.GetScaled(this.JpegWidth);
-                scaledHeight = scalingFactor.GetScaled(this.JpegHeight);
+                scaledWidth = scalingFactor.GetScaled(this.jpegWidth);
+                scaledHeight = scalingFactor.GetScaled(this.jpegHeight);
                 if (scaledWidth <= desiredWidth && scaledHeight <= desiredHeight)
                 {
                     break;
                 }
             }
-            
+
             if (scaledWidth > desiredWidth || scaledHeight > desiredHeight)
             {
-                throw new Exception("Could not scale down to desired image dimensions");
+                throw new Exception("Could not scale to desired image dimensions");
             }
-            
+
             return scaledWidth;
         }
 
@@ -215,53 +209,49 @@
         /// Returns the height of the largest scaled-down image that the TurboJPEG decompressor can generate without
         /// exceeding the desired image width and height.
         /// </summary>
-        /// <param name="desiredWidth">Desired width (in pixels) of the decompressed image. Setting this to 0 is the 
-        /// same as setting it to the width of the JPEG image (in other words, the width will not be considered when 
+        /// <param name="desiredWidth">Desired width (in pixels) of the decompressed image. Setting this to 0 is the
+        /// same as setting it to the width of the JPEG image (in other words, the width will not be considered when
         /// determining the scaled image size).</param>
-        /// <param name="desiredHeight">Desired height (in pixels) of the decompressed image. Setting this to 0 is the 
-        /// same as setting it to the height of the JPEG image (in other words, the height will not be considered when 
+        /// <param name="desiredHeight">Desired height (in pixels) of the decompressed image. Setting this to 0 is the
+        /// same as setting it to the height of the JPEG image (in other words, the height will not be considered when
         /// determining the scaled image size).</param>
         /// <returns>
-        /// The height of the largest scaled-down image that the TurboJPEG decompressor can generate without exceeding 
+        /// The height of the largest scaled-down image that the TurboJPEG decompressor can generate without exceeding
         /// the desired image width and height.
         /// </returns>
         public virtual int GetScaledHeight(int desiredWidth, int desiredHeight)
         {
-            if (this.JpegWidth < 1 || this.JpegHeight < 1)
-            {
-                throw new InvalidOperationException(NoAssocError);
-            }
+            Contract.Requires(desiredWidth >= 0, "desiredWidth must be non-negative");
+            Contract.Requires(desiredHeight >= 0, "desiredHeight must be non-negative");
 
-            if (desiredWidth < 0 || desiredHeight < 0)
-            {
-                throw new Exception("Invalid argument in GetScaledHeight()");
-            }
+            Contract.Assume(this.jpegWidth > 0, "No JPEG image is associated with this instance");
+            Contract.Assume(this.jpegHeight > 0, "No JPEG image is associated with this instance");
 
             var scalingFactors = TurboJpegInterop.ScalingFactors;
             if (desiredWidth == 0)
             {
-                desiredWidth = this.JpegWidth;
+                desiredWidth = this.jpegWidth;
             }
 
             if (desiredHeight == 0)
             {
-                desiredHeight = this.JpegHeight;
+                desiredHeight = this.jpegHeight;
             }
 
-            int scaledWidth = this.JpegWidth, scaledHeight = this.JpegHeight;
+            int scaledWidth = this.jpegWidth, scaledHeight = this.jpegHeight;
             foreach (var scalingFactor in scalingFactors)
             {
-                scaledWidth = scalingFactor.GetScaled(this.JpegWidth);
-                scaledHeight = scalingFactor.GetScaled(this.JpegHeight);
+                scaledWidth = scalingFactor.GetScaled(this.jpegWidth);
+                scaledHeight = scalingFactor.GetScaled(this.jpegHeight);
                 if (scaledWidth <= desiredWidth && scaledHeight <= desiredHeight)
                 {
                     break;
                 }
             }
-            
+
             if (scaledWidth > desiredWidth || scaledHeight > desiredHeight)
             {
-                throw new Exception("Could not scale down to desired image dimensions");
+                throw new Exception("Could not scale to desired image dimensions");
             }
             return scaledHeight;
         }
@@ -271,19 +261,19 @@
         /// the given destination buffer.
         /// </summary>
         /// <param name="desiredWidth">The desired width (in pixels) of the decompressed image.  If the desired image
-        ///  dimensions are different than the dimensions of the JPEG image being decompressed, then TurboJPEG will use 
-        /// scaling in the JPEG decompressor to generate the largest possible image that will fit within the desired 
-        /// dimensions. Setting this to 0 is the same as setting it to the width of the JPEG image; in other words the 
+        /// dimensions are different than the dimensions of the JPEG image being decompressed, then TurboJPEG will use
+        /// scaling in the JPEG decompressor to generate the largest possible image that will fit within the desired
+        /// dimensions. Setting this to 0 is the same as setting it to the width of the JPEG image; in other words the
         /// width will not be considered when determining the scaled image size).
         /// </param>
         /// <param name="pitch">The number of bytes per line of the destination image.  Normally, this should be set to
-        /// <code>scaledWidth * <see cref="TurboJpegUtilities.GetPixelSize"/>(pixelFormat)</code> if the decompressed 
-        /// image is unpadded, but you can use this to, for instance, pad each line of the decompressed image to a 
-        /// 4-byte boundary or to decompress the JPEG image into a region of a larger image. NOTE: <code>scaledWidth</code> 
-        /// can be determined by calling 
-        /// <code>scalingFactor.<seealso cref="TurboJpegScalingFactor#getScaled getScaled" />(jpegWidth)</code> or by 
+        /// <code>scaledWidth * <see cref="TurboJpegUtilities.GetPixelSize" />(pixelFormat)</code> if the decompressed
+        /// image is unpadded, but you can use this to, for instance, pad each line of the decompressed image to a
+        /// 4-byte boundary or to decompress the JPEG image into a region of a larger image. NOTE: <code>scaledWidth</code>
+        /// can be determined by calling
+        /// <code>scalingFactor.<seealso cref="TurboJpegScalingFactor#getScaled getScaled" />(jpegWidth)</code> or by
         /// calling <seealso cref="GetScaledWidth" />. Setting this parameter to 0 is the equivalent of setting it to
-        /// <code>scaledWidth * <see cref="TurboJpegUtilities.GetPixelSize"/>(pixelFormat)</code>.</param>
+        /// <code>scaledWidth * <see cref="TurboJpegUtilities.GetPixelSize" />(pixelFormat)</code>.</param>
         /// <param name="desiredHeight">
         /// The desired Height (in pixels) of the decompressed image (or image region.)  If the desired
         /// image dimensions are different than the dimensions of the JPEG image being decompressed, then TurboJPEG will use
@@ -305,14 +295,15 @@
                                           PixelFormat pixelFormat,
                                           TurboJpegFlags flags)
         {
-            if (this.jpegBuffer == null)
-            {
-                throw new InvalidOperationException(NoAssocError);
-            }
-            if (desiredWidth < 0 || pitch < 0 || desiredHeight < 0 || flags < 0)
-            {
-                throw new Exception("Invalid argument in Decompress()");
-            }
+            Contract.Requires(desiredWidth >= 0, "desiredWidth must be non-negative");
+            Contract.Requires(desiredHeight >= 0, "desiredHeight must be non-negative");
+            Contract.Requires(pitch >= 0, "pitch must be non-negative");
+            Contract.Requires(Enum.IsDefined(typeof(TurboJpegFlags), flags));
+            Contract.Ensures(Contract.Result<TurboJpegBuffer>()
+                                 .BufferSize > 0,
+                             "output buffer must have non-zero size");
+
+            Contract.Assume(this.jpegBuffer != null, "No JPEG image is associated with this instance");
 
             var pixelSize = TurboJpegUtilities.GetPixelSize(pixelFormat);
             var scaledWidth = this.GetScaledWidth(desiredWidth, desiredHeight);
@@ -328,10 +319,10 @@
             // matching deallocator lest Bad Things happen. Unlike compress, where the initial buffer size is a best 
             // guess, we know the dimensions of the uncompressed image and the number of bits per pixel and so sizing 
             // it appropriately is trivial and the buffer will never be reallocated
-            using (var buffer = new TurboJpegSafeHandle(TurboJpegInterop.alloc(bufferSize)))
+            using(var buffer = new TurboJpegSafeHandle(NativeMethods.alloc(bufferSize)))
             {
                 var ptr = buffer.DangerousGetHandle();
-                if (TurboJpegInterop.decompress(this.Handle,
+                if (NativeMethods.decompress(this.Handle,
                                                 this.jpegBuffer,
                                                 this.jpegBuffer.Length,
                                                 ptr,
@@ -359,37 +350,33 @@
         /// community, the TurboJPEG API uses "YUV" to refer to an image format consisting of Y, Cb, and Cr image planes.
         /// </para>
         /// </summary>
-        /// <param name="flags">The <see cref="TurboJpegFlags"/> controlling decompression.</param>
+        /// <param name="flags">The <see cref="TurboJpegFlags" /> controlling decompression.</param>
         public TurboJpegBuffer DecompressToYuv(TurboJpegFlags flags)
         {
-            if (this.jpegBuffer == null)
-            {
-                throw new InvalidOperationException(NoAssocError);
-            }
+            Contract.Requires(Enum.IsDefined(typeof(TurboJpegFlags), flags));
+            Contract.Ensures(Contract.Result<TurboJpegBuffer>()
+                                 .BufferSize > 0,
+                             "output buffer must have non-zero size");
 
-            if (flags < 0)
-            {
-                throw new Exception("Invalid argument in DecompressToYuv()");
-            }
+            Contract.Assume(this.jpegBuffer != null, "No JPEG image is associated with this instance");
 
-            var bufferSize = TurboJpegInterop.bufSizeYUV(this.JpegWidth, 4, this.JpegHeight, this.JpegSubsampling);
-            using (var buffer = new TurboJpegSafeHandle(TurboJpegInterop.alloc(bufferSize)))
+            var bufferSize = NativeMethods.bufSizeYUV(this.jpegWidth, 4, this.jpegHeight, this.jpegSubsampling);
+            using(var buffer = new TurboJpegSafeHandle(NativeMethods.alloc(bufferSize)))
             {
                 var ptr = buffer.DangerousGetHandle();
-                if (TurboJpegInterop.decompressToYUV(this.Handle,
+                if (NativeMethods.decompressToYUV(this.Handle,
                                                      this.jpegBuffer,
                                                      this.jpegBuffer.Length,
                                                      ref ptr,
-                                                     this.JpegWidth,
+                                                     this.jpegWidth,
                                                      4,
-                                                     this.JpegHeight,
+                                                     this.jpegHeight,
                                                      flags) != 0)
                 {
                     throw new Exception(TurboJpegInterop.GetLastError());
                 }
 
                 // we now have the result in a buffer on the unmanaged heap. 
-                
                 return new TurboJpegBuffer(ptr, bufferSize);
             }
         }

@@ -10,9 +10,9 @@
         [TestMethod]
         public void AllocAndRelease()
         {
-            var pointerToMemory = TurboJpegInterop.alloc(1048576);
+            var pointerToMemory = NativeMethods.alloc(1048576);
             Assert.IsTrue(pointerToMemory != IntPtr.Zero);
-            TurboJpegInterop.free(pointerToMemory);
+            NativeMethods.free(pointerToMemory);
         }
 
         [TestMethod]
@@ -20,7 +20,7 @@
         {
             const int bufsize = 1024;
             var deadbeef = new byte[] { 0xde, 0xad, 0xbe, 0xef };
-            var pointerToMemory = TurboJpegInterop.alloc(bufsize);
+            var pointerToMemory = NativeMethods.alloc(bufsize);
             using (var buffer = new TurboJpegBuffer(pointerToMemory, bufsize))
             {
                 Assert.IsTrue(buffer.BufferSize == bufsize);

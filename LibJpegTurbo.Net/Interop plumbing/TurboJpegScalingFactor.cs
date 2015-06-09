@@ -4,17 +4,26 @@
 
     using System;
     using System.Diagnostics;
+    using System.Diagnostics.Contracts;
     using System.Runtime.InteropServices;
 
     #endregion
 
-    /// <summary>Fractional scaling factor</summary>
+    /// <summary>Fractional scaling factor.</summary>
+    /// <remarks>Because System.Rational isn't a thing.</remarks>
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     [DebuggerDisplay("{DebugString}")]
-    public struct TurboJpegScalingFactor
+    internal struct TurboJpegScalingFactor
     {
-        private readonly int num;
-        private readonly int denom;
+        /// <summary>
+        /// The numerator.
+        /// </summary>
+        private readonly int numerator;
+        
+        /// <summary>
+        /// The denominator.
+        /// </summary>
+        private readonly int denominator;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TurboJpegScalingFactor" /> class.
@@ -25,18 +34,11 @@
         /// <paramref name="denominator"/> must be greater than 1.</exception>
         public TurboJpegScalingFactor(int numerator, int denominator)
         {
-            if (numerator < 1)
-            {
-                throw new ArgumentOutOfRangeException("numerator", "Numerator must be greater than 1");
-            }
+            Contract.Requires(numerator > 0, "Numerator must be greater than 0");
+            Contract.Requires(denominator > 0, "Denominator must be greater than 0");
 
-            if (denominator < 1)
-            {
-                throw new ArgumentOutOfRangeException("denominator", "Denominator must be greater than 1");
-            }
-
-            num = numerator;
-            denom = denominator;
+            this.numerator = numerator;
+            this.denominator = denominator;
         }
 
         /// <summary>
@@ -50,19 +52,19 @@
         /// <summary>Returns numerator </summary>
         public int Numerator
         {
-            get { return this.num; }
+            get { return this.numerator; }
         }
 
         /// <summary>Returns denominator </summary>
         public int Denominator
         {
-            get { return this.denom; }
+            get { return this.denominator; }
         }
 
         /// <summary>Returns true or false, depending on whether this instance is equal to 1/1. </summary>
         public bool One
         {
-            get { return (this.Numerator == 1 && this.Denominator == 1); }
+            get { return this.numerator == 1 && this.denominator == 1; }
         }
 
         /// <summary>
@@ -70,7 +72,7 @@
         /// </summary>
         private string DebugString
         {
-            get { return String.Format("{0}:{1}", this.num, this.denom); }
+            get { return String.Format("{0}:{1}", this.numerator, this.denominator); }
         }
 
         /// <summary>
@@ -79,7 +81,10 @@
         /// </summary>
         public int GetScaled(int dimension)
         {
-            return (dimension * this.Numerator + this.Denominator - 1)/this.Denominator;
+            Contract.Assume(dimension * this.numerator + this.denominator - 1 != Int32.MinValue ||
+                            this.denominator != -1);
+
+            return (dimension * this.numerator + this.denominator - 1) / this.denominator;
         }
 
         /// <summary>
@@ -88,7 +93,7 @@
         /// </summary>
         public bool Equals(TurboJpegScalingFactor other)
         {
-            return (this.Numerator == other.Numerator && this.Denominator == other.Denominator);
+            return this.numerator == other.numerator && this.denominator == other.denominator;
         }
     }
 }

@@ -3,6 +3,7 @@ namespace LibJpegTurbo.Net
     #region
 
     using System;
+    using System.Diagnostics.Contracts;
     using System.Runtime.InteropServices;
 
     #endregion
@@ -19,10 +20,7 @@ namespace LibJpegTurbo.Net
         public TurboJpegSafeHandle(IntPtr handle)
             : base(IntPtr.Zero, true)
         {
-            if (handle == IntPtr.Zero)
-            {
-                throw new ArgumentNullException("handle");
-            }
+            Contract.Requires(handle != IntPtr.Zero);
 
             this.handle = handle;
         }
@@ -53,7 +51,7 @@ namespace LibJpegTurbo.Net
                 return true;
             }
             
-            var success = TurboJpegInterop.destroy(this.handle);
+            var success = NativeMethods.destroy(this.handle);
             this.handle = IntPtr.Zero;
             return success == 0;
         }
@@ -68,6 +66,8 @@ namespace LibJpegTurbo.Net
         /// <exception cref="System.InvalidOperationException">handle is invalid</exception>
         public static explicit operator IntPtr(TurboJpegSafeHandle handle)
         {
+            Contract.Requires(handle != null);
+
             if (handle.IsInvalid)
             {
                 throw new InvalidOperationException("handle is invalid");

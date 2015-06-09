@@ -4,6 +4,7 @@
 
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.Contracts;
     using System.Runtime.InteropServices;
 
     #endregion
@@ -46,24 +47,33 @@
         /// </summary>
         /// <param name="subsampling">The chroma subsampling.</param>
         /// <returns>The MCU block width.</returns>
-        public static int GetMcuWidth(Subsampling subsampling)
+        public static int GetMcuWidth(this Subsampling subsampling)
         {
+            Contract.Requires(Enum.IsDefined(typeof(Subsampling), subsampling));
+            Contract.Assume((int)subsampling < LibJpegTurbo.Net.TurboJpegUtilities.mcuWidth.Length);
+
             return TurboJpegUtilities.mcuWidth[(int)subsampling];
         }
 
         /// <summary>Returns the MCU block height for the specified chroma subsampling.</summary>
         /// <param name="subsampling">The chroma subsampling.</param>
         /// <returns>The MCU block height.</returns>
-        public static int GetMcuHeight(Subsampling subsampling)
+        public static int GetMcuHeight(this Subsampling subsampling)
         {
+            Contract.Requires(Enum.IsDefined(typeof(Subsampling), subsampling));
+            Contract.Assume((int)subsampling < LibJpegTurbo.Net.TurboJpegUtilities.mcuHeight.Length);
+
             return TurboJpegUtilities.mcuHeight[(int)subsampling];
         }
 
         /// <summary>Returns the pixel size (in bytes) for the specified pixel format.</summary>
         /// <param name="pixelFormat">The pixel format.</param>
         /// <returns>The pixel size (in bytes).</returns>
-        public static int GetPixelSize(PixelFormat pixelFormat)
+        public static int GetPixelSize(this PixelFormat pixelFormat)
         {
+            Contract.Requires(Enum.IsDefined(typeof(PixelFormat), pixelFormat));
+            Contract.Assume((int)pixelFormat < LibJpegTurbo.Net.TurboJpegUtilities.pixelSize.Length);
+
             return TurboJpegUtilities.pixelSize[(int)pixelFormat];
         }
 
@@ -75,8 +85,11 @@
         /// </summary>
         /// <param name="pixelFormat">The pixel format.</param>
         /// <returns>The red offset for the pixel format </returns>
-        public static int GetRedOffset(PixelFormat pixelFormat)
+        public static int GetRedOffset(this PixelFormat pixelFormat)
         {
+            Contract.Requires(Enum.IsDefined(typeof(PixelFormat), pixelFormat));
+            Contract.Assume((int)pixelFormat < LibJpegTurbo.Net.TurboJpegUtilities.redOffset.Length);
+
             return TurboJpegUtilities.redOffset[(int)pixelFormat];
         }
 
@@ -88,8 +101,11 @@
         /// </summary>
         /// <param name="pixelFormat">The pixel format.</param>
         /// <returns>The green offset for the pixel format </returns>
-        public static int GetGreenOffset(PixelFormat pixelFormat)
+        public static int GetGreenOffset(this PixelFormat pixelFormat)
         {
+            Contract.Requires(Enum.IsDefined(typeof(PixelFormat), pixelFormat));
+            Contract.Assume((int)pixelFormat < LibJpegTurbo.Net.TurboJpegUtilities.greenOffset.Length);
+
             return TurboJpegUtilities.greenOffset[(int)pixelFormat];
         }
 
@@ -101,8 +117,11 @@
         /// </summary>
         /// <param name="pixelFormat">The pixel format.</param>
         /// <returns>The blue offset for the pixel format </returns>
-        public static int GetBlueOffset(PixelFormat pixelFormat)
+        public static int GetBlueOffset(this PixelFormat pixelFormat)
         {
+            Contract.Requires(Enum.IsDefined(typeof(PixelFormat), pixelFormat));
+            Contract.Assume((int) pixelFormat < LibJpegTurbo.Net.TurboJpegUtilities.blueOffset.Length);
+
             return TurboJpegUtilities.blueOffset[(int)pixelFormat];
         }
 
@@ -111,7 +130,7 @@
         /// </summary>
         /// <param name="value">The value to pad.</param>
         /// <returns>The padded value.</returns>
-        public static int Pad(int value) 
+        public static int Pad(this int value) 
         {
             return (value + 3) & (~3);
         }

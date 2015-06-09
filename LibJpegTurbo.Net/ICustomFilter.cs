@@ -38,7 +38,7 @@
         /// <param name="transformId">
         /// ID number of the transformed image to which <paramref name="coeffBuffer"/> belongs. This is the same as 
         /// the index of the transform in the <code>transforms</code> array that was passed to 
-        /// <see cref="TurboJpegTransformer.transform"/>.
+        /// <see cref="NativeMethods.transform"/>.
         /// </param>
         /// <param name="transform">
         /// A <see cref="TurboJpegTransform" /> instance that specifies the parameters and/or cropping region for this 
